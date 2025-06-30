@@ -66,13 +66,17 @@ require('includes/urls_process.php');
       <!-- body //-->
 
       <!-- body_text //-->
-     <div class="row">
-      <div class="col-md-12 col-lg-12">
-        <div class="text-right"><button class="btn btn-primary" data-toggle="modal" data-target="#addRecordModal">
-  ➕ Add New URL
-</button></div>
-      </div>
-     </div>
+      <div class="row mt-3">
+  <div class="col-xs-12 text-right">
+    <button id="openAddUrlBtn" class="btn btn-primary">
+      ➕ Add New URL
+    </button>
+    <button id="openAddQsUrlBtn" class="btn btn-info">
+      ➕ Add QS URL
+    </button>
+  </div>
+</div>
+
       
 
         <!-- eof: Locate template Files -->
