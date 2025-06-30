@@ -732,36 +732,30 @@ $('#templateEditModal').on('shown.bs.modal', function () {
 // Cache loaded dropdown data so it loads ONCE per page
 let cachedDropdownData = null;
 
+// Modal open handler
 $('#addRecordModal').on('shown.bs.modal', function () {
-  showAddModalLoadingOverlay();
+  // Show "Loading..." immediately
   showLoadingInDropdowns();
 
   if (cachedDropdownData) {
-    // ✅ Use cached data
-    setTimeout(() => {
-      populateAddModalDropdowns(cachedDropdownData);
-      hideAddModalLoadingOverlay();
-    }, 200);
+    // Use cache immediately
+    populateAddModalDropdowns(cachedDropdownData);
   } else {
-    // ✅ First time fetch from server
+    // Load from server
     loadAddFormDropdowns();
   }
 });
 
-function showAddModalLoadingOverlay() {
-  $('#addModalLoaderOverlay').show();
-}
-
-function hideAddModalLoadingOverlay() {
-  $('#addModalLoaderOverlay').hide();
-}
-
+// Show "Loading..." message in all selects
 function showLoadingInDropdowns() {
-  $('#addRecordModal select').each(function () {
-    $(this).empty().append('<option>Loading...</option>');
+  $('#addRecordModal .select2-add-record').each(function () {
+    $(this)
+      .empty()
+      .append('<option>Loading... Please wait</option>');
   });
 }
 
+// Load dropdown data via AJAX once
 function loadAddFormDropdowns() {
   $.ajax({
     url: 'meta_new.php',
@@ -771,16 +765,17 @@ function loadAddFormDropdowns() {
     success: function (data) {
       cachedDropdownData = data;
       populateAddModalDropdowns(data);
-      hideAddModalLoadingOverlay();
     },
     error: function () {
       alert('Error loading dropdown data. Please try again.');
-      $('#addRecordModal select').empty().append('<option>Error loading</option>');
-      hideAddModalLoadingOverlay();
+      $('#addRecordModal .select2-add-record')
+        .empty()
+        .append('<option>Error loading data</option>');
     }
   });
 }
 
+// Populate selects in modal with data
 function populateAddModalDropdowns(data) {
   fillSelect($('#add_domain'), data.domains);
   fillSelect($('#add_url'), data.urls);
@@ -791,21 +786,15 @@ function populateAddModalDropdowns(data) {
     fillSelect($('#textbox' + i), data.textboxes);
   }
 
-  // ✅ Apply/refresh Select2 on all modal select elements
-  $('#addRecordModal .select2-add-record').each(function() {
-    $(this).select2({
-      dropdownParent: $('#addRecordModal'),
-      width: '100%',
-      placeholder: 'Select an option',
-      allowClear: true
-    });
-  });
+  // Apply Select2 cleanly
+  initModalSelect2();
 }
 
+// Fill individual <select> with options
 function fillSelect(select, items) {
   select.empty().append('<option value="">Select</option>');
-  if (items && items.length) {
-    items.forEach(function(item) {
+  if (items && items.length > 0) {
+    items.forEach(function (item) {
       select.append('<option value="' + item.value + '">' + item.text + '</option>');
     });
   } else {

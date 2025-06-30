@@ -704,50 +704,30 @@ while (!$templates->EOF) {
 <!-- Add Record Modal -->
 <div class="modal fade" id="addRecordModal" tabindex="-1" role="dialog" aria-labelledby="addRecordModalLabel" aria-hidden="true">
   <div class="modal-dialog modal-lg" role="document">
-    <div class="modal-content position-relative">
-      
-      <!-- Loader Overlay -->
-      <div id="addModalLoaderOverlay" style="
-        display: none;
-        position: absolute;
-        top: 0; left: 0;
-        width: 100%; height: 100%;
-        background-color: rgba(255, 255, 255, 0.85);
-        z-index: 1051;
-        text-align: center;
-        padding-top: 150px;
-      ">
-        <div class="spinner-border text-primary" style="width: 3rem; height: 3rem;" role="status">
-          <span class="sr-only">Loading...</span>
-        </div>
-        <div style="margin-top: 10px; font-weight: bold;">Loading... Please wait</div>
-      </div>
-
-      <!-- Modal Header -->
+    <div class="modal-content">
       <div class="modal-header">
         <h5 class="modal-title">Add New URL Record</h5>
         <button type="button" class="close" data-dismiss="modal" aria-label="Close">
           <span aria-hidden="true">&times;</span>
         </button>
       </div>
-
-      <!-- Modal Body -->
       <div class="modal-body">
         <form id="addRecordForm">
           <div class="row">
-            <div class="col-md-4">
+            
+            <div class="col-md-6">
               <label>Domain</label>
-              <select id="add_domain" name="domain" class="form-control select2-add-record" required></select>
+              <select id="add_domain" name="domain" class="form-control  select2-add-record" required></select>
             </div>
-            <div class="col-md-4">
+            <div class="col-md-6">
               <label>URL</label>
-              <select id="add_url" name="url" class="form-control select2-add-record" required></select>
+              <select id="add_url" name="url" class="form-control  select2-add-record" required></select>
             </div>
-            <div class="col-md-4">
+            <div class="col-md-6">
               <label>Meta Title</label>
               <input type="text" name="meta_title" class="form-control" required />
             </div>
-            <div class="col-md-12 mt-2">
+            <div class="col-md-6">
               <label>Meta Description</label>
               <textarea name="meta_description" class="form-control" rows="2"></textarea>
             </div>
@@ -780,8 +760,6 @@ while (!$templates->EOF) {
           </div>
         </form>
       </div>
-
-      <!-- Modal Footer -->
       <div class="modal-footer">
         <button type="button" class="btn btn-secondary" data-dismiss="modal">Cancel</button>
         <button type="button" class="btn btn-success" onclick="submitAddRecordForm()">Add Record</button>
@@ -789,7 +767,6 @@ while (!$templates->EOF) {
     </div>
   </div>
 </div>
-
 <!-- //adding new data modal -->
 
 
