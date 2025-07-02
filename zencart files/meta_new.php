@@ -307,7 +307,7 @@ $current_per_page = isset($_GET['per_page']) ? (int)$_GET['per_page'] : ($_SESSI
                 // Meta fields
                 $meta_fields = array('meta_title', 'meta_description');
 
-                if ($column_name === 'cookiecutterqs_temp' && isset($form_data['include_templates'])) {
+                if ($column_name === 'cookiecutterqs_temp' && isset($form_data['include_meta'])) {
                     // Show value
                     echo nl2br(htmlspecialchars($cell));
 
@@ -767,38 +767,89 @@ while (!$templates->EOF) {
               <small class="form-text text-muted">You can select multiple URLs to add them all with these settings.</small>
             </div>
             <div class="col-md-4">
-              <label>Meta Title</label>
-              <input type="text" name="meta_title" class="form-control" required />
-            </div>
-            <div class="col-md-12 mt-2">
-              <label>Meta Description</label>
-              <textarea name="meta_description" class="form-control" rows="2"></textarea>
-            </div>
-            <div class="col-md-6 mt-3">
               <label>Cookiecutterqs Temp</label>
               <select id="cookiecutterqs_temp" name="cookiecutterqs_temp" class="form-control select2-add-record"></select>
             </div>
+            <div class="col-md-6 mt-2">
+              <label>Meta Title</label>
+              <input type="text" name="meta_title" class="form-control" required />
+            </div>
+            <div class="col-md-6 mt-2">
+              <label>Meta Description</label>
+              <textarea name="meta_description" class="form-control" rows="2"></textarea>
+            </div>
+           
           </div>
 
           <div class="row mt-3">
             <div class="col-md-6">
-              <label>Templates</label>
+          
               <div class="row">
-                <div class="col-md-6 mb-1"><select id="template1" name="template1" class="form-control select2-add-record"></select></div>
-                <div class="col-md-6 mb-1"><select id="template2" name="template2" class="form-control select2-add-record"></select></div>
-                <div class="col-md-6 mb-1"><select id="template3" name="template3" class="form-control select2-add-record"></select></div>
-                <div class="col-md-6 mb-1"><select id="template4" name="template4" class="form-control select2-add-record"></select></div>
-                <div class="col-md-6 mb-1"><select id="template5" name="template5" class="form-control select2-add-record"></select></div>
+                <div class="col-md-6 mb-1">
+                <div class="form-group">
+                <label>Template 1</label>
+                  <select id="template1" name="template1" class="form-control select2-add-record"></select>
+                </div>
+                </div>
+                <div class="col-md-6 mb-1">
+                <div class="form-group">
+                <label>Template 2</label>
+                  <select id="template2" name="template2" class="form-control select2-add-record"></select>
+                </div>
+                </div>
+                <div class="col-md-6 mb-1">
+                <div class="form-group">
+                <label>Template 3</label>
+                  <select id="template3" name="template3" class="form-control select2-add-record"></select>
+                </div>
+                </div>
+                <div class="col-md-6 mb-1">
+                <div class="form-group">
+                <label>Template 4</label>
+                  <select id="template4" name="template4" class="form-control select2-add-record"></select>
+                </div>
+                </div>
+                <div class="col-md-6 mb-1">
+                <div class="form-group">
+                <label>Template 5</label>
+                  <select id="template5" name="template5" class="form-control select2-add-record"></select>
+                </div>
+                </div>
               </div>
             </div>
             <div class="col-md-6">
-              <label>Textboxes</label>
+              
               <div class="row">
-                <div class="col-md-6 mb-1"><select id="textbox1" name="textbox1" class="form-control select2-add-record"></select></div>
-                <div class="col-md-6 mb-1"><select id="textbox2" name="textbox2" class="form-control select2-add-record"></select></div>
-                <div class="col-md-6 mb-1"><select id="textbox3" name="textbox3" class="form-control select2-add-record"></select></div>
-                <div class="col-md-6 mb-1"><select id="textbox4" name="textbox4" class="form-control select2-add-record"></select></div>
-                <div class="col-md-6 mb-1"><select id="textbox5" name="textbox5" class="form-control select2-add-record"></select></div>
+                <div class="col-md-6 mb-1">
+                <div class="form-group">
+                <label> TextBox 1</label>
+                  <select id="textbox1" name="textbox1" class="form-control select2-add-record"></select>
+                </div>
+                </div>
+                <div class="col-md-6 mb-1">
+                <div class="form-group">
+                <label> TextBox 2</label>
+                  <select id="textbox2" name="textbox2" class="form-control select2-add-record"></select>
+                </div>
+                </div>
+                <div class="col-md-6 mb-1">
+                <div class="form-group">
+                <label> TextBox 3</label>
+                  <select id="textbox3" name="textbox3" class="form-control select2-add-record"></select>
+                </div>
+                </div>
+                <div class="col-md-6 mb-1">
+                <div class="form-group">
+                <label> TextBox 4</label>
+                  <select id="textbox4" name="textbox4" class="form-control select2-add-record"></select>
+                </div>
+                </div>
+                <div class="col-md-6 mb-1">
+                <div class="form-group">
+                <label> TextBox 5</label>
+                  <select id="textbox5" name="textbox5" class="form-control select2-add-record"></select>
+                </div>
+                </div>
               </div>
             </div>
           </div>
@@ -854,18 +905,61 @@ while (!$templates->EOF) {
 
           <div class="form-group">
             <label>QS URL</label>
-            <input type="text" name="qs_url" class="form-control" required />
+            <select id="qs_url" name="qs_url[]" class="form-control select2-add-record" multiple required></select>
+              <small class="form-text text-muted">You can select multiple URLs to add them all with these settings.</small>  
           </div>
 
           <div class="row">
             <div class="col-md-12">
-              <label>QS Textboxes</label>
+             
               <div class="row">
-                <div class="col-md-6 mb-1"><select id="qsTextbox1" name="qsTextbox1" class="form-control select2-add-record"></select></div>
-                <div class="col-md-6 mb-1"><select id="qsTextbox2" name="qsTextbox2" class="form-control select2-add-record"></select></div>
-                <div class="col-md-6 mb-1"><select id="qsTextbox3" name="qsTextbox3" class="form-control select2-add-record"></select></div>
-                <div class="col-md-6 mb-1"><select id="qsTextbox4" name="qsTextbox4" class="form-control select2-add-record"></select></div>
-                <div class="col-md-6 mb-1"><select id="qsTextbox5" name="qsTextbox5" class="form-control select2-add-record"></select></div>
+              <div class="col-md-6 mb-1">
+              <div class="form-group">
+              <label>QS TextBox 1</label>
+                  <select id="qsTextbox1" name="qsTextbox1" class="form-control select2-add-record"></select>
+               </div> 
+                </div>
+                <div class="col-md-6 mb-1">
+                <div class="form-group">
+                <label>QS TextBox 2</label>
+                  <select id="qsTextbox2" name="qsTextbox2" class="form-control select2-add-record"></select>
+                </div>
+                </div>
+                <div class="col-md-6 mb-1">
+                <div class="form-group">
+                <label>QS TextBox 3</label>
+                  <select id="qsTextbox3" name="qsTextbox3" class="form-control select2-add-record"></select>
+                </div>
+                </div>
+                <div class="col-md-6 mb-1">
+                <div class="form-group">
+                <label>QS TextBox 4</label>
+                  <select id="qsTextbox4" name="qsTextbox4" class="form-control select2-add-record"></select>
+                </div>
+                </div>
+                <div class="col-md-6 mb-1">
+                <div class="form-group">
+                <label>QS TextBox 5</label>
+                  <select id="qsTextbox5" name="qsTextbox5" class="form-control select2-add-record"></select>
+                </div>
+                </div>
+
+                <div class="col-md-6 mb-1">
+                <div class="form-group">
+                  <label>Cookiecutterqs Temp</label>
+                  <select id="qs_cookiecutterqs_temp" name="cookiecutterqs_temp" class="form-control select2-add-record"></select>
+                </div>
+              </div>
+
+
+                <div class="col-md-6 mt-2">
+              <label>Meta Title</label>
+              <input type="text" name="qs_meta_title" class="form-control" required />
+            </div>
+            <div class="col-md-6 mt-2">
+              <label>Meta Description</label>
+              <textarea name="qs_meta_description" class="form-control" rows="2"></textarea>
+            </div>
               </div>
             </div>
           </div>

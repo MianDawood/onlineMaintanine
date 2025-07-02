@@ -766,19 +766,7 @@ $('#addRecordModal').on('shown.bs.modal', function () {
   }
 });
 
-// QS URL Modal
-$('#addQsRecordModal').on('shown.bs.modal', function () {
-  showQsModalLoadingOverlay();
-  if (cachedQsRecordDropdownData) {
-    // Use cached data for QS URL Modal
-    setTimeout(() => {
-      populateQsRecordModalDropdowns(cachedQsRecordDropdownData);
-      hideQsModalLoadingOverlay();
-    }, 200);
-  } else {
-    loadQsRecordModalDropdownData();
-  }
-});
+
 
 // Load data for Add URL Modal
 function loadAddRecordModalDropdownData() {
@@ -799,27 +787,6 @@ function loadAddRecordModalDropdownData() {
     }
   });
 }
-
-// Load data for QS URL Modal
-function loadQsRecordModalDropdownData() {
-  $.ajax({
-    url: 'meta_new.php',
-    type: 'POST',
-    data: { ajax_action: 'load_dropdown_data' },
-    dataType: 'json',
-    success: function (data) {
-      cachedQsRecordDropdownData = data;
-      populateQsRecordModalDropdowns(data);
-      hideQsModalLoadingOverlay();
-    },
-    error: function () {
-      alert('Error loading dropdown data. Please try again.');
-      $('#addQsRecordModal select').empty().append('<option>Error loading</option>');
-      hideQsModalLoadingOverlay();
-    }
-  });
-}
-
 // Populate Add URL Modal Dropdowns
 function populateAddRecordModalDropdowns(data) {
   fillSelect($('#add_domain'), data.domains);
@@ -843,11 +810,45 @@ function populateAddRecordModalDropdowns(data) {
   });
 }
 
+
+// QS URL Modal
+$('#addQsRecordModal').on('shown.bs.modal', function () {
+  showQsModalLoadingOverlay();
+  if (cachedQsRecordDropdownData) {
+    // Use cached data for QS URL Modal
+    setTimeout(() => {
+      populateQsRecordModalDropdowns(cachedQsRecordDropdownData);
+      hideQsModalLoadingOverlay();
+    }, 200);
+  } else {
+    loadQsRecordModalDropdownData();
+  }
+});
+// Load data for QS URL Modal
+function loadQsRecordModalDropdownData() {
+  $.ajax({
+    url: 'meta_new.php',
+    type: 'POST',
+    data: { ajax_action: 'load_dropdown_qs_data' },
+    dataType: 'json',
+    success: function (data) {
+      cachedQsRecordDropdownData = data;
+      populateQsRecordModalDropdowns(data);
+      hideQsModalLoadingOverlay();
+    },
+    error: function () {
+      alert('Error loading dropdown data. Please try again.');
+      $('#addQsRecordModal select').empty().append('<option>Error loading</option>');
+      hideQsModalLoadingOverlay();
+    }
+  });
+}
+
 // Populate QS URL Modal Dropdowns
 function populateQsRecordModalDropdowns(data) {
   fillSelect($('#add_qs_domain'), data.domains);
   fillSelect($('#qs_url'), data.urls);
-  fillSelect($('#cookiecutterqs_temp_qs'), data.cookiecutterqs);
+  fillSelect($('#qs_cookiecutterqs_temp'), data.cookiecutterqs); // This should have both value (id) and text (name)
 
   // Populate the template and textbox fields for QS URL
   for (let i = 1; i <= 5; i++) {
@@ -865,17 +866,17 @@ function populateQsRecordModalDropdowns(data) {
   });
 }
 
-// Utility function to populate dropdowns
 function fillSelect(select, items) {
   select.empty().append('<option value="">Select</option>');
   if (items && items.length) {
-    items.forEach(function (item) {
+    items.forEach(function(item) {
       select.append('<option value="' + item.value + '">' + item.text + '</option>');
     });
   } else {
     select.append('<option value="">No options found</option>');
   }
 }
+
 
 
 function submitAddRecordForm() {

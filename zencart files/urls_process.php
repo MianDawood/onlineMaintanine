@@ -72,51 +72,67 @@ if (isset($_POST['ajax_action']) && $_POST['ajax_action'] === 'insert_new_record
 
 if (isset($_POST['ajax_action']) && $_POST['ajax_action'] === 'insert_qs_new_record') {
     $domain          = zen_db_input($_POST['domain']);
-    $qs_url          = zen_db_input($_POST['qs_url']);
+    $qs_urls         = $_POST['qs_url'];  // Now it's an array of qs_url
     $cookiecutterqs_temp = zen_db_input($_POST['cookiecutterqs_temp']);
+    $qs_meta_title          = zen_db_input($_POST['qs_meta_title']);
+    $qs_meta_description     = zen_db_input($_POST['qs_meta_description']);
 
     // QS Textboxes (1 to 5)
     $qs_textboxes = [];
     for ($i = 1; $i <= 5; $i++) {
         $qs_textboxes["qsTextbox$i"] = isset($_POST["qsTextbox$i"]) ? zen_db_input($_POST["qsTextbox$i"]) : '';
     }
+    $cookiecutterqs_temp     = zen_db_input($_POST['cookiecutterqs_temp']);
 
-    // Check for existing record (duplicate check)
-    $check = $db->Execute("SELECT COUNT(*) AS total FROM cookiecutterQS_qs_url WHERE domain = '$domain' AND qs_url = '$qs_url'");
-    
-    if ($check->fields['total'] > 0) {
-        // Record already exists
-        echo json_encode(['status' => 'error', 'message' => 'QS URL already exists for this domain.']);
-        exit;
+    // Prepare arrays for successful and duplicate inserts
+    $insertedCount = 0;
+    $skippedCount = 0;
+    $errors = [];
+
+    foreach ($qs_urls as $qs_url_raw) {
+        $qs_url = zen_db_input($qs_url_raw);
+
+        // Check for existing record (duplicate check)
+        $check = $db->Execute("SELECT COUNT(*) AS total FROM cookiecutterQS_qs_url WHERE domain = '$domain' AND qs_url = '$qs_url'");
+
+        if ($check->fields['total'] > 0) {
+            // Skip this URL if it already exists
+            $skippedCount++;
+            continue;
+        }
+
+        // Insert into `cookiecutterQS_qs_url`
+        $sql = "
+            INSERT INTO cookiecutterQS_qs_url (
+                cookiecutter_id, domain, qs_url,qs_meta_title,qs_meta_description,
+                qsTextbox1, qsTextbox2, qsTextbox3, qsTextbox4, qsTextbox5
+            ) VALUES (
+                '$cookiecutterqs_temp', '$domain', '$qs_url','$qs_meta_title','$qs_meta_description',
+                '{$qs_textboxes['qsTextbox1']}', '{$qs_textboxes['qsTextbox2']}', '{$qs_textboxes['qsTextbox3']}',
+                '{$qs_textboxes['qsTextbox4']}', '{$qs_textboxes['qsTextbox5']}'
+            )
+        ";
+
+        try {
+            $db->Execute($sql);
+            $insertedCount++;
+        } catch (Exception $e) {
+            $errors[] = "Error inserting QS URL: $qs_url";
+        }
     }
 
-    // Set the cookiecutter_id as '00' or get from somewhere
-    $cookiecutter_id  = '00';  // Example hardcoded value, you may want to fetch this dynamically
-
-    // Insert into `cookiecutterQS_qs_url`
-    $sql = "
-        INSERT INTO cookiecutterQS_qs_url (
-            cookiecutter_id, domain, qs_url,
-            qsTextbox1, qsTextbox2, qsTextbox3, qsTextbox4, qsTextbox5
-        ) VALUES (
-            '$cookiecutter_id', '$domain', '$qs_url',
-            '{$qs_textboxes['qsTextbox1']}', '{$qs_textboxes['qsTextbox2']}', '{$qs_textboxes['qsTextbox3']}',
-            '{$qs_textboxes['qsTextbox4']}', '{$qs_textboxes['qsTextbox5']}'
-        )
-    ";
-
-    // Execute the SQL query
-    $query = $db->Execute($sql);
-
-    // Check if insert was successful
-    if ($query) {
-        echo json_encode(['status' => 'success', 'message' => 'QS Record added successfully']);
+    // Final response
+    if ($insertedCount > 0) {
+        $message = "✅ $insertedCount QS URL(s) inserted.";
+        if ($skippedCount > 0) $message .= " ⚠️ $skippedCount duplicate(s) skipped.";
+        echo json_encode(['status' => 'success', 'message' => $message]);
     } else {
-        echo json_encode(['status' => 'error', 'message' => 'Error inserting QS record.']);
+        echo json_encode(['status' => 'error', 'message' => 'No new QS URL records inserted. Possible duplicates or empty data.', 'errors' => $errors]);
     }
 
     exit;
 }
+
 
 
 
@@ -185,6 +201,49 @@ if (isset($_POST['ajax_action']) && $_POST['ajax_action'] === 'load_dropdown_dat
   echo json_encode($response);
   exit;
 }
+
+
+if (isset($_POST['ajax_action']) && $_POST['ajax_action'] === 'load_dropdown_qs_data') {
+    // Retrieve data from the database
+    $domains    = $db->Execute("SELECT DISTINCT domain FROM template_to_urls");
+    $urls       = $db->Execute("SELECT DISTINCT url FROM query_software"); // Ensure `url` exists
+    $textboxes  = $db->Execute("SELECT template_name FROM custom_template_file");
+    $cookie_rs  = $db->Execute("SELECT id, name FROM cookie_cutter_qs ORDER BY name ASC");
+
+    // Function to build dropdown options from recordset, including both `id` and `name`
+    function buildOptions($recordset, $id_key = 'id', $name_key = 'name') {
+        $result = [];
+        while (!$recordset->EOF) {
+            $val = $recordset->fields[$id_key];
+            $text = $recordset->fields[$name_key];
+            $result[] = ['value' => $val, 'text' => $text];
+            $recordset->MoveNext();
+        }
+        return $result;
+    }
+
+    // Prepare data for URLs dropdown (Assuming `url` is both value and text)
+    $urlsOptions = [];
+    if ($urls) {
+        $urlsOptions = buildOptions($urls, 'url', 'url');
+    }
+
+    // Prepare the response with all dropdown data
+    $response = [
+        'domains'        => buildOptions($domains, 'domain', 'domain'),
+        'urls'           => $urlsOptions,
+        'textboxes'      => buildOptions($textboxes, 'template_name', 'template_name'),
+        'cookiecutterqs' => buildOptions($cookie_rs, 'id', 'name') // Include both `id` and `name`
+    ];
+
+    // Send response as JSON to be used by the frontend
+    echo json_encode($response);
+    exit;
+}
+
+
+
+
 
 
 
@@ -458,7 +517,7 @@ if (isset($_GET['action']) && $_GET['action'] == 'get_urls_data') {
         $fields = "id, domain, url";
 
         if ($include_meta) {
-            $fields .= ", meta_title, meta_description";
+            $fields .= ", meta_title, meta_description,cookiecutterqs_temp";
         }
 
         if ($include_textboxes) {
@@ -466,7 +525,7 @@ if (isset($_GET['action']) && $_GET['action'] == 'get_urls_data') {
         }
 
         if ($include_templates) {
-            $fields .= ", template, template1, template2, template3, template4, template5, cookiecutterqs_temp";
+            $fields .= ", template, template1, template2, template3, template4, template5";
         }
 
         $sql = "SELECT $fields FROM template_to_urls WHERE domain = '" . zen_db_input($selected_domain) . "'";
@@ -483,8 +542,11 @@ if (isset($_GET['action']) && $_GET['action'] == 'get_urls_data') {
         $fields = "id, domain, qs_url";
 
         if ($include_textboxes) {
-            $fields .= ",qsTextbox1, qsTextbox2, qsTextbox3, qsTextbox4, qsTextbox5,
-                        qsTextbox1_mode, qsTextbox2_mode, qsTextbox3_mode, qsTextbox4_mode, qsTextbox5_mode";
+            $fields .= ",qsTextbox1, qsTextbox2, qsTextbox3, qsTextbox4, qsTextbox5";
+        }
+
+        if ($include_meta) {
+            $fields .= ",qs_meta_title, qs_meta_description, cookiecutter_id";
         }
 
         $sql = "SELECT $fields FROM cookiecutterQS_qs_url WHERE domain = '" . zen_db_input($selected_domain) . "'";
