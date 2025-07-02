@@ -728,68 +728,49 @@ $('#templateEditModal').on('shown.bs.modal', function () {
   }
 });
 
-// Cache loaded dropdown data for Add URL Modal and QS URL Modal separately
-let cachedAddRecordDropdownData = null;
-let cachedQsRecordDropdownData = null;
 
-// Show loading overlay for Add URL Modal
+// Cache loaded dropdown data so it loads ONCE per page
+let cachedDropdownData = null;
+
+$('#addRecordModal').on('shown.bs.modal', function () {
+  showAddModalLoadingOverlay();
+  showLoadingInDropdowns();
+
+  if (cachedDropdownData) {
+    // ✅ Use cached data
+    setTimeout(() => {
+      populateAddModalDropdowns(cachedDropdownData);
+      hideAddModalLoadingOverlay();
+    }, 200);
+  } else {
+    // ✅ First time fetch from server
+    loadAddFormDropdowns();
+  }
+});
+
 function showAddModalLoadingOverlay() {
   $('#addModalLoaderOverlay').show();
 }
 
-// Show loading overlay for QS URL Modal
-function showQsModalLoadingOverlay() {
-  $('#qsModalLoaderOverlay').show();
-}
-
-// Hide loading overlay for Add URL Modal
 function hideAddModalLoadingOverlay() {
   $('#addModalLoaderOverlay').hide();
 }
 
-// Hide loading overlay for QS URL Modal
-function hideQsModalLoadingOverlay() {
-  $('#qsModalLoaderOverlay').hide();
+function showLoadingInDropdowns() {
+  $('#addRecordModal select').each(function () {
+    $(this).empty().append('<option>Loading...</option>');
+  });
 }
 
-// Add URL Modal
-$('#addRecordModal').on('shown.bs.modal', function () {
-  showAddModalLoadingOverlay();
-  if (cachedAddRecordDropdownData) {
-    // Use cached data for Add URL Modal
-    setTimeout(() => {
-      populateAddRecordModalDropdowns(cachedAddRecordDropdownData);
-      hideAddModalLoadingOverlay();
-    }, 200);
-  } else {
-    loadAddRecordModalDropdownData();
-  }
-});
-
-// QS URL Modal
-$('#addQsRecordModal').on('shown.bs.modal', function () {
-  showQsModalLoadingOverlay();
-  if (cachedQsRecordDropdownData) {
-    // Use cached data for QS URL Modal
-    setTimeout(() => {
-      populateQsRecordModalDropdowns(cachedQsRecordDropdownData);
-      hideQsModalLoadingOverlay();
-    }, 200);
-  } else {
-    loadQsRecordModalDropdownData();
-  }
-});
-
-// Load data for Add URL Modal
-function loadAddRecordModalDropdownData() {
+function loadAddFormDropdowns() {
   $.ajax({
     url: 'meta_new.php',
     type: 'POST',
     data: { ajax_action: 'load_dropdown_data' },
     dataType: 'json',
     success: function (data) {
-      cachedAddRecordDropdownData = data;
-      populateAddRecordModalDropdowns(data);
+      cachedDropdownData = data;
+      populateAddModalDropdowns(data);
       hideAddModalLoadingOverlay();
     },
     error: function () {
@@ -800,40 +781,18 @@ function loadAddRecordModalDropdownData() {
   });
 }
 
-// Load data for QS URL Modal
-function loadQsRecordModalDropdownData() {
-  $.ajax({
-    url: 'meta_new.php',
-    type: 'POST',
-    data: { ajax_action: 'load_dropdown_data' },
-    dataType: 'json',
-    success: function (data) {
-      cachedQsRecordDropdownData = data;
-      populateQsRecordModalDropdowns(data);
-      hideQsModalLoadingOverlay();
-    },
-    error: function () {
-      alert('Error loading dropdown data. Please try again.');
-      $('#addQsRecordModal select').empty().append('<option>Error loading</option>');
-      hideQsModalLoadingOverlay();
-    }
-  });
-}
-
-// Populate Add URL Modal Dropdowns
-function populateAddRecordModalDropdowns(data) {
+function populateAddModalDropdowns(data) {
   fillSelect($('#add_domain'), data.domains);
   fillSelect($('#add_url'), data.urls);
   fillSelect($('#cookiecutterqs_temp'), data.cookiecutterqs);
 
-  // Populate the template and textbox fields
   for (let i = 1; i <= 5; i++) {
     fillSelect($('#template' + i), data.templates);
     fillSelect($('#textbox' + i), data.textboxes);
   }
 
-  // Initialize Select2 for all dropdowns in Add URL Modal
-  $('#addRecordModal .select2-add-record').each(function () {
+  // ✅ Apply/refresh Select2 on all modal select elements
+  $('#addRecordModal .select2-add-record').each(function() {
     $(this).select2({
       dropdownParent: $('#addRecordModal'),
       width: '100%',
@@ -843,33 +802,10 @@ function populateAddRecordModalDropdowns(data) {
   });
 }
 
-// Populate QS URL Modal Dropdowns
-function populateQsRecordModalDropdowns(data) {
-  fillSelect($('#add_qs_domain'), data.domains);
-  fillSelect($('#qs_url'), data.urls);
-  fillSelect($('#cookiecutterqs_temp_qs'), data.cookiecutterqs);
-
-  // Populate the template and textbox fields for QS URL
-  for (let i = 1; i <= 5; i++) {
-    fillSelect($('#qsTextbox' + i), data.textboxes);
-  }
-
-  // Initialize Select2 for all dropdowns in QS URL Modal
-  $('#addQsRecordModal .select2-add-record').each(function () {
-    $(this).select2({
-      dropdownParent: $('#addQsRecordModal'),
-      width: '100%',
-      placeholder: 'Select an option',
-      allowClear: true
-    });
-  });
-}
-
-// Utility function to populate dropdowns
 function fillSelect(select, items) {
   select.empty().append('<option value="">Select</option>');
   if (items && items.length) {
-    items.forEach(function (item) {
+    items.forEach(function(item) {
       select.append('<option value="' + item.value + '">' + item.text + '</option>');
     });
   } else {
@@ -877,13 +813,32 @@ function fillSelect(select, items) {
   }
 }
 
+// Initialize Select2 cleanly on modal selects
+function initModalSelect2() {
+  // Destroy previous instances to avoid duplicates
+  $('#addRecordModal .select2-add-record').each(function () {
+    if ($(this).hasClass('select2-hidden-accessible')) {
+      $(this).select2('destroy');
+    }
+  });
+
+  // Re-initialize
+  $('#addRecordModal .select2-add-record').select2({
+    width: '100%',
+    dropdownParent: $('#addRecordModal'),
+    placeholder: 'Please select',
+    allowClear: true
+  });
+}
+
+
 
 function submitAddRecordForm() {
   const formData = $('#addRecordForm').serialize();
   $.post('meta_new.php', formData + '&ajax_action=insert_new_record', function(res) {
     const response = JSON.parse(res);
     if (response.status === 'success') {
-      alert(response.message);
+      alert(response.message +'Record added successfully');
       $('#addRecordModal').modal('hide');
       if (window.dataTable) dataTable.ajax.reload();
     } else {
@@ -891,19 +846,3 @@ function submitAddRecordForm() {
     }
   });
 }
-
-
-function submitAddQsRecordForm() {
-  const formData = $('#addQsRecordForm').serialize();
-  $.post('meta_new.php', formData + '&ajax_action=insert_qs_new_record', function(res) {
-    const response = JSON.parse(res);
-    if (response.status === 'success') {
-      alert(response.message);
-      $('#addQsRecordModal').modal('hide');
-      if (window.dataTable) dataTable.ajax.reload();  // Optionally reload your data table
-    } else {
-      alert('Error: ' + response.message);
-    }
-  });
-}
-

@@ -1,127 +1,52 @@
 <?php
+
 if (isset($_POST['ajax_action']) && $_POST['ajax_action'] === 'insert_new_record') {
-    // Sanitize and validate
-    $urls = $_POST['url'] ?? [];
-    if (!is_array($urls) || empty($urls)) {
-        echo json_encode(['status' => 'error', 'message' => 'No URLs selected.']);
-        exit;
-    }
-
-    $domain             = zen_db_input($_POST['domain']);
-    $meta_title         = zen_db_input($_POST['meta_title']);
-    $meta_description   = zen_db_input($_POST['meta_description']);
-    $cookiecutterqs_temp= zen_db_input($_POST['cookiecutterqs_temp']);
-
-    // Prepare template and textbox fields
+    $domain             = zen_db_input(trim($_POST['domain']));
+    $url                = zen_db_input(trim($_POST['url']));
+    $meta_title         = zen_db_input(trim($_POST['meta_title']));
+    $meta_description   = zen_db_input(trim($_POST['meta_description']));
+    $cookiecutterqs_temp= zen_db_input(trim($_POST['cookiecutterqs_temp']));
+  
+    $insert_template    = isset($_POST['insert_template_table']);
+    $insert_qs          = isset($_POST['insert_qs_table']);
+  
+    // Template and Textbox Fields
     $template_fields = [];
     $textbox_fields = [];
     for ($i = 1; $i <= 5; $i++) {
-        $template_fields["template$i"] = zen_db_input($_POST["template$i"] ?? '');
-        $textbox_fields["textbox$i"] = zen_db_input($_POST["textbox$i"] ?? '');
+        $template_fields["template$i"] = zen_db_input(trim($_POST["template$i"] ?? ''));
+        $textbox_fields["textbox$i"] = zen_db_input(trim($_POST["textbox$i"] ?? ''));
     }
-
-    $insertedCount = 0;
-    $skippedCount = 0;
-    $errors = [];
-
-    foreach ($urls as $url_raw) {
-        $url = zen_db_input($url_raw);
-        if ($url === '') continue;
-
-        // Check for existing entry
-        $check = $db->Execute("SELECT COUNT(*) AS total FROM template_to_urls WHERE domain = '$domain' AND url = '$url'");
-        if ($check->fields['total'] > 0) {
-            $skippedCount++;
-            continue;
-        }
-
-        // Perform Insert
-        $sql = "
-            INSERT INTO template_to_urls (
-                domain, url, meta_title, meta_description, cookiecutterqs_temp,
-                template1, template2, template3, template4, template5,
-                textbox1, textbox2, textbox3, textbox4, textbox5
-            ) VALUES (
-                '$domain', '$url', '$meta_title', '$meta_description', '$cookiecutterqs_temp',
-                '{$template_fields['template1']}', '{$template_fields['template2']}', '{$template_fields['template3']}',
-                '{$template_fields['template4']}', '{$template_fields['template5']}',
-                '{$textbox_fields['textbox1']}', '{$textbox_fields['textbox2']}', '{$textbox_fields['textbox3']}',
-                '{$textbox_fields['textbox4']}', '{$textbox_fields['textbox5']}'
-            )";
-
-        try {
-            $db->Execute($sql);
-            $insertedCount++;
-        } catch (Exception $e) {
-            $errors[] = "Error inserting URL: $url";
-        }
-    }
-
-    // Final response
-    if ($insertedCount > 0) {
-        $message = "✅ $insertedCount record(s) inserted.";
-        if ($skippedCount > 0) $message .= " ⚠️ $skippedCount duplicate(s) skipped.";
-        echo json_encode(['status' => 'success', 'message' => $message]);
-    } else {
-        echo json_encode(['status' => 'error', 'message' => 'No new records inserted. Possible duplicates or empty data.', 'errors' => $errors]);
-    }
-
-    exit;
-}
-
-
-if (isset($_POST['ajax_action']) && $_POST['ajax_action'] === 'insert_qs_new_record') {
-    $domain          = zen_db_input($_POST['domain']);
-    $qs_url          = zen_db_input($_POST['qs_url']);
-    $cookiecutterqs_temp = zen_db_input($_POST['cookiecutterqs_temp']);
-
-    // QS Textboxes (1 to 5)
-    $qs_textboxes = [];
-    for ($i = 1; $i <= 5; $i++) {
-        $qs_textboxes["qsTextbox$i"] = isset($_POST["qsTextbox$i"]) ? zen_db_input($_POST["qsTextbox$i"]) : '';
-    }
-
-    // Check for existing record (duplicate check)
-    $check = $db->Execute("SELECT COUNT(*) AS total FROM cookiecutterQS_qs_url WHERE domain = '$domain' AND qs_url = '$qs_url'");
-    
-    if ($check->fields['total'] > 0) {
-        // Record already exists
-        echo json_encode(['status' => 'error', 'message' => 'QS URL already exists for this domain.']);
+  
+    // ✅ Check for existing URL in template_to_urls for this domain
+    $checkSql = "SELECT COUNT(*) as cnt FROM template_to_urls WHERE domain = '$domain' AND url = '$url'";
+    $checkResult = $db->Execute($checkSql);
+    $count = $checkResult->fields['cnt'] ?? 0;
+  
+    if ($count > 0) {
+        echo json_encode(['status' => 'error', 'message' => 'This URL already exists for this domain.']);
         exit;
     }
-
-    // Set the cookiecutter_id as '00' or get from somewhere
-    $cookiecutter_id  = '00';  // Example hardcoded value, you may want to fetch this dynamically
-
-    // Insert into `cookiecutterQS_qs_url`
-    $sql = "
-        INSERT INTO cookiecutterQS_qs_url (
-            cookiecutter_id, domain, qs_url,
-            qsTextbox1, qsTextbox2, qsTextbox3, qsTextbox4, qsTextbox5
-        ) VALUES (
-            '$cookiecutter_id', '$domain', '$qs_url',
-            '{$qs_textboxes['qsTextbox1']}', '{$qs_textboxes['qsTextbox2']}', '{$qs_textboxes['qsTextbox3']}',
-            '{$qs_textboxes['qsTextbox4']}', '{$qs_textboxes['qsTextbox5']}'
-        )
-    ";
-
-    // Execute the SQL query
-    $query = $db->Execute($sql);
-
-    // Check if insert was successful
-    if ($query) {
-        echo json_encode(['status' => 'success', 'message' => 'QS Record added successfully']);
-    } else {
-        echo json_encode(['status' => 'error', 'message' => 'Error inserting QS record.']);
-    }
-
-    exit;
-}
-
-
-
-
   
+    // ✅ Insert if not duplicate
+    $sql1 = sprintf(
+        "INSERT INTO template_to_urls (domain, url, meta_title, meta_description, cookiecutterqs_temp, template1, template2, template3, template4, template5, textbox1, textbox2, textbox3, textbox4, textbox5)
+         VALUES ('%s', '%s', '%s', '%s', '%s', '%s', '%s', '%s', '%s', '%s', '%s', '%s', '%s', '%s', '%s')",
+        $domain, $url, $meta_title, $meta_description, $cookiecutterqs_temp,
+        $template_fields['template1'], $template_fields['template2'], $template_fields['template3'], $template_fields['template4'], $template_fields['template5'],
+        $textbox_fields['textbox1'], $textbox_fields['textbox2'], $textbox_fields['textbox3'], $textbox_fields['textbox4'], $textbox_fields['textbox5']
+    );
+  
+    $query = $db->Execute($sql1);
+  
+    if ($query) {
+        echo json_encode(['status' => 'success', 'message' => "Added new URL: $url"]);
+        exit;
+    } else {
+        echo json_encode(['status' => 'error', 'message' => 'Failed to insert the record.']);
+        exit;
+    }
+  }
   
  
 //   if ($insert_qs) {

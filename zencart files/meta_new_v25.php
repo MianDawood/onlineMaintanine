@@ -62,15 +62,6 @@ require('includes/urls_process.php');
   margin: 0 auto;
 }
 
-#qsModalLoaderOverlay .spinner {
-  border: 4px solid rgba(0,0,0,0.1);
-  border-top-color: #007bff;
-  border-radius: 50%;
-  width: 60px;
-  height: 60px;
-  animation: spin 1s linear infinite;
-  margin: 0 auto;
-}
 @keyframes spin {
   to { transform: rotate(360deg); }
 }
@@ -98,7 +89,7 @@ require('includes/urls_process.php');
   ➕ Add New URL
     </button>
 
-    <button class="btn btn-info" data-toggle="modal" data-target="#addQsRecordModal">
+    <button class="btn btn-info" data-toggle="modal" data-target="#addRecordModal">
   ➕ Add QS URL
 </button>
 </div>
@@ -726,24 +717,26 @@ while (!$templates->EOF) {
 
 
 <!-- //adding new data modal -->
+<!-- Add Record Modal -->
 <div class="modal fade" id="addRecordModal" tabindex="-1" role="dialog" aria-labelledby="addRecordModalLabel" aria-hidden="true">
   <div class="modal-dialog modal-lg" role="document">
     <div class="modal-content position-relative">
       
       <!-- Loader Overlay -->
-      <div id="addModalLoaderOverlay" style="
-        display: none;
-        position: absolute;
-        top: 0; left: 0;
-        width: 100%; height: 100%;
-        background-color: rgba(255, 255, 255, 0.85);
-        z-index: 1051;
-        text-align: center;
-        padding-top: 150px;
-      ">
-        <div class="spinner"></div>
-        <div style="margin-top: 10px; font-weight: bold;">Loading... Please wait</div>
-      </div>
+      <!-- Loader Overlay -->
+<div id="addModalLoaderOverlay" style="
+  display: none;
+  position: absolute;
+  top: 0; left: 0;
+  width: 100%; height: 100%;
+  background-color: rgba(255, 255, 255, 0.85);
+  z-index: 1051;
+  text-align: center;
+  padding-top: 150px;
+">
+  <div class="spinner"></div>
+  <div style="margin-top: 10px; font-weight: bold;">Loading... Please wait</div>
+</div>
 
       <!-- Modal Header -->
       <div class="modal-header">
@@ -763,8 +756,7 @@ while (!$templates->EOF) {
             </div>
             <div class="col-md-4">
               <label>URL</label>
-              <select id="add_url" name="url[]" class="form-control select2-add-record" multiple required></select>
-              <small class="form-text text-muted">You can select multiple URLs to add them all with these settings.</small>
+              <select id="add_url" name="url" class="form-control select2-add-record" required></select>
             </div>
             <div class="col-md-4">
               <label>Meta Title</label>
@@ -779,7 +771,6 @@ while (!$templates->EOF) {
               <select id="cookiecutterqs_temp" name="cookiecutterqs_temp" class="form-control select2-add-record"></select>
             </div>
           </div>
-
           <div class="row mt-3">
             <div class="col-md-6">
               <label>Templates</label>
@@ -814,73 +805,7 @@ while (!$templates->EOF) {
   </div>
 </div>
 
-
-<!-- //adding QS data modal -->
-<div class="modal fade" id="addQsRecordModal" tabindex="-1" role="dialog" aria-labelledby="addQsRecordModalLabel" aria-hidden="true">
-  <div class="modal-dialog modal-md" role="document">
-    <div class="modal-content position-relative">
-      
-      <!-- Loader Overlay for QS Modal -->
-      <div id="qsModalLoaderOverlay" style="
-        display: none;
-        position: absolute;
-        top: 0; left: 0;
-        width: 100%; height: 100%;
-        background-color: rgba(255, 255, 255, 0.85);
-        z-index: 1051;
-        text-align: center;
-        padding-top: 150px;
-      ">
-        <div class="spinner"></div>
-        <div style="margin-top: 10px; font-weight: bold;">Loading... Please wait</div>
-      </div>
-      
-      <!-- Modal Header -->
-      <div class="modal-header">
-        <h5 class="modal-title">Add New QS URL Record</h5>
-        <button type="button" class="close" data-dismiss="modal" aria-label="Close">
-          <span aria-hidden="true">&times;</span>
-        </button>
-      </div>
-
-      <!-- Modal Body -->
-      <div class="modal-body">
-        <form id="addQsRecordForm">
-          <input type="hidden" name="add_mode" value="qs" />
-          <div class="form-group">
-            <label>Domain</label>
-            <select id="add_qs_domain" name="domain" class="form-control" required></select>
-          </div>
-
-          <div class="form-group">
-            <label>QS URL</label>
-            <input type="text" name="qs_url" class="form-control" required />
-          </div>
-
-          <div class="row">
-            <div class="col-md-12">
-              <label>QS Textboxes</label>
-              <div class="row">
-                <div class="col-md-6 mb-1"><select id="qsTextbox1" name="qsTextbox1" class="form-control select2-add-record"></select></div>
-                <div class="col-md-6 mb-1"><select id="qsTextbox2" name="qsTextbox2" class="form-control select2-add-record"></select></div>
-                <div class="col-md-6 mb-1"><select id="qsTextbox3" name="qsTextbox3" class="form-control select2-add-record"></select></div>
-                <div class="col-md-6 mb-1"><select id="qsTextbox4" name="qsTextbox4" class="form-control select2-add-record"></select></div>
-                <div class="col-md-6 mb-1"><select id="qsTextbox5" name="qsTextbox5" class="form-control select2-add-record"></select></div>
-              </div>
-            </div>
-          </div>
-        </form>
-      </div>
-
-      <!-- Modal Footer -->
-      <div class="modal-footer">
-        <button type="button" class="btn btn-secondary" data-dismiss="modal">Cancel</button>
-        <button type="button" class="btn btn-success" onclick="submitAddQsRecordForm()">Add QS Record</button>
-      </div>
-    </div>
-  </div>
-</div>
-
+<!-- //adding new data modal -->
 
 
     <!-- body_eof //-->
