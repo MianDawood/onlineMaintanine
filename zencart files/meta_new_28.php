@@ -305,28 +305,36 @@ $current_per_page = isset($_GET['per_page']) ? (int)$_GET['per_page'] : ($_SESSI
                 
                 
                 // Meta fields
-                $meta_fields = array('meta_title', 'meta_description');
+                $meta_fields = array('meta_title', 'meta_description','qs_meta_title','qs_meta_description');
 
-                if ($column_name === 'cookiecutterqs_temp' && isset($form_data['include_meta'])) {
-                    // Show value
-                    echo nl2br(htmlspecialchars($cell));
-
-                    if (trim($cell) != '') {
-                        // Edit Button - opens CookieQS Modal
-                        echo ' <button class="btn btn-xs btn-outline-primary" style="padding:2px 5px; font-size:10px;" title="Edit" 
-                            onclick="openCookieQSModal(\'edit\', \'' . htmlspecialchars($column_name) . '\', \'' . htmlspecialchars($row['domain']) . '\', \'' . htmlspecialchars($cell) . '\', \'' . $row['id'] . '\')">✏️</button>';
-      
-                         
-                        // Delete Button
-                        echo ' <button class="btn btn-xs btn-outline-danger" style="padding:2px 5px; font-size:10px;" title="Delete" 
-                            onclick="deleteTemplateField(\'' . htmlspecialchars($column_name) . '\', \'' . htmlspecialchars($row['domain']) . '\', \'' . $row['id'] . '\')">🗑️</button>';
-                    } else {
-                        // Add Button
-                        echo ' <button class="btn btn-xs btn-outline-success" style="padding:2px 5px; font-size:10px;" title="Add" 
-                            onclick="openCookieQSModal(\'add\', \'' . htmlspecialchars($column_name) . '\', \'' . htmlspecialchars($row['domain']) . '\', \'\', \'' . $row['id'] . '\')">➕</button>';
-                    }
-
-                } elseif (
+                if (($column_name === 'cookiecutterqs_temp' || $column_name === 'qs_cookiecutter_name') && isset($form_data['include_meta'])) {
+                  // Show value
+                  echo nl2br(htmlspecialchars($cell));
+              
+                  // Set the value to pass based on the column_name
+                  $valueToPass = ($column_name === 'qs_cookiecutter_name') ? htmlspecialchars($row['cookiecutter_id']) : htmlspecialchars($cell);
+              
+                  // Set the column_name to cookiecutter_id if it is 'qs_cookiecutter_name'
+                  $columnToPass = ($column_name === 'qs_cookiecutter_name') ? 'cookiecutter_id' : $column_name;
+              
+                  // Add or edit functionality based on whether the cell value is empty
+                  if (trim($cell) != '') {
+                    
+                      // Edit Button - opens CookieQS Modal
+                      echo ' <button class="btn btn-xs btn-outline-primary" style="padding:2px 5px; font-size:10px;" title="Edit" 
+                          onclick="openCookieQSModal(\'edit\', \'' . htmlspecialchars($columnToPass) . '\', \'' . htmlspecialchars($row['domain']) . '\', \'' . $valueToPass . '\', \'' . $row['id'] . '\')">✏️</button>';
+              
+                      // Delete Button
+                      echo ' <button class="btn btn-xs btn-outline-danger" style="padding:2px 5px; font-size:10px;" title="Delete" 
+                          onclick="deleteTemplateField(\'' . htmlspecialchars($columnToPass) . '\', \'' . htmlspecialchars($row['domain']) . '\', \'' . $row['id'] . '\')">🗑️</button>';
+                  } else {
+                      // Add Button (when cell is empty)
+                      echo ' <button class="btn btn-xs btn-outline-success" style="padding:2px 5px; font-size:10px;" title="Add" 
+                          onclick="openCookieQSModal(\'add\', \'' . htmlspecialchars($columnToPass) . '\', \'' . htmlspecialchars($row['domain']) . '\', \'\', \'' . $row['id'] . '\')">➕</button>';
+                  }
+              }
+              
+                elseif (
                   (in_array($column_name, ['template', 'template1', 'template2', 'template3', 'template4', 'template5']) && isset($form_data['include_templates'])) ||
                   (in_array($column_name, ['textbox1', 'textbox2', 'textbox3', 'textbox4', 'textbox5','qsTextbox1','qsTextbox2','qsTextbox3','qsTextbox4','qsTextbox5']) && isset($form_data['include_textboxes']))
               ) {
@@ -542,11 +550,14 @@ while (!$templates->EOF) {
           <button type="button" class="close" data-dismiss="modal" aria-label="Close">&times;</button>
         </div>
         <div class="modal-body">
+          <!-- Hidden Fields -->
           <input type="hidden" id="cookieqs_columnName" name="columnName">
           <input type="hidden" id="cookieqs_domain" name="domain">
           <input type="hidden" id="cookieqs_rowId" name="rowId">
           <input type="hidden" id="cookieqs_actionType" name="actionType">
-          
+          <input type="hidden" id="cookiecutter_id" name="cookiecutter_id">
+
+          <!-- Select Dropdown -->
           <div class="form-group">
             <label for="cookieqs_dropdown">Select Template:</label>
             <select id="cookieqs_dropdown" name="newValue" class="form-control select2" style="width: 100%">
@@ -554,8 +565,8 @@ while (!$templates->EOF) {
               $qs_sql = "SELECT id, name FROM cookie_cutter_qs ORDER BY name ASC";
               $qs_results = $db->Execute($qs_sql);
               while (!$qs_results->EOF) {
-                echo '<option value="' . htmlspecialchars($qs_results->fields['name']) . '">' . htmlspecialchars($qs_results->fields['name']) . '</option>';
-                $qs_results->MoveNext();
+                  echo '<option value="' . htmlspecialchars($qs_results->fields['name']) . '" data-id="' . htmlspecialchars($qs_results->fields['id']) . '">' . htmlspecialchars($qs_results->fields['name']) . '</option>';
+                  $qs_results->MoveNext();
               }
               ?>
             </select>
@@ -568,6 +579,7 @@ while (!$templates->EOF) {
     </form>
   </div>
 </div>
+
 
 
 

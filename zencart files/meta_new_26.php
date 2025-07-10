@@ -305,9 +305,12 @@ $current_per_page = isset($_GET['per_page']) ? (int)$_GET['per_page'] : ($_SESSI
                 
                 
                 // Meta fields
-                $meta_fields = array('meta_title', 'meta_description');
+                $meta_fields = array('meta_title', 'meta_description','qs_meta_title','qs_meta_description');
 
-                if ($column_name === 'cookiecutterqs_temp' && isset($form_data['include_meta'])) {
+                if ($column_name === 'cookiecutterqs_temp' || $column_name === 'qs_cookiecutter_name' && isset($form_data['include_meta'])) {
+
+                  
+
                     // Show value
                     echo nl2br(htmlspecialchars($cell));
 

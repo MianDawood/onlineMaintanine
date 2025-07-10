@@ -150,7 +150,7 @@ function deleteTemplateField(columnName, domain, rowId) {
 
             // After delete → show Add button
             var newHtml = '';
-            if(columnName =='cookiecutterqs_temp')
+            if(columnName =='cookiecutterqs_temp' || columnName =='cookiecutter_id')
             {
               newHtml += ' <button class="btn btn-xs btn-outline-success" style="padding:2px 5px; font-size:10px;" title="Add" ' +
                 'onclick="openCookieQSModal(\'add\', \'' + columnName + '\', \'' + domain + '\', \'\', \'' + rowId + '\')">➕</button>';
@@ -187,51 +187,100 @@ function deleteTemplateField(columnName, domain, rowId) {
 });
 
 function openCookieQSModal(action, columnName, domain, currentValue, rowId) {
-    $('#cookieqsModalLabel').text((action === 'edit' ? 'Edit' : 'Add') + ' Cookiecutterqs Temp');
-    $('#cookieqs_columnName').val(columnName);
-    $('#cookieqs_domain').val(domain);
-    $('#cookieqs_rowId').val(rowId);
-    $('#cookieqs_actionType').val(action);
-    $('#cookieqs_newValue').val(currentValue); // fallback if dropdown is not preloaded
+  $('#cookieqsModalLabel').text((action === 'edit' ? 'Edit ' : 'Add ') + columnName);
+  $('#cookieqs_columnName').val(columnName);
+  $('#cookieqs_domain').val(domain);
+  $('#cookieqs_rowId').val(rowId);
+  $('#cookieqs_actionType').val(action);
 
-    // Preselect dropdown
-    $('#cookieqsModal').on('shown.bs.modal', function () {
-        if ($("#cookieqs_dropdown option[value='" + currentValue + "']").length) {
-            $('#cookieqs_dropdown').val(currentValue).trigger('change');
-        }
-    });
+  $('#cookieqsModal').off('shown.bs.modal').one('shown.bs.modal', function () {
+    if (columnName === 'cookiecutter_id') {
+      // Value passed is ID - find option by data-id
+      const matchingOption = $('#cookieqs_dropdown option').filter(function() {
+        return $(this).data('id') == currentValue;
+      });
+      if (matchingOption.length) {
+        $('#cookieqs_dropdown').val(matchingOption.val()).trigger('change');
+      } else {
+        $('#cookieqs_dropdown').val(null).trigger('change');
+      }
+    } else if (columnName === 'cookiecutterqs_temp') {
+      // Value passed is name
+      $('#cookieqs_dropdown').val(currentValue).trigger('change');
+    }
 
-    $('#cookieqsModal').modal('show');
+    // Immediately update hidden cookiecutter_id based on initial value
+    const selectedOption = $('#cookieqs_dropdown option:selected');
+    const dataId = selectedOption.data('id') || '';
+    $('#cookiecutter_id').val(dataId);
+  });
+
+  // Ensure change listener is installed fresh
+  $('#cookieqs_dropdown').off('change').on('change', function () {
+    const selectedOption = $(this).find('option:selected');
+    const dataId = selectedOption.data('id') || '';
+    $('#cookiecutter_id').val(dataId);
+  });
+
+  $('#cookieqsModal').modal('show');
 }
 
+
+// Always keep cookiecutter_id updated when dropdown changes
+$('#cookieqs_dropdown').on('change', function () {
+  const selectedOption = $(this).find('option:selected');
+  const dataId = selectedOption.data('id') || '';
+  $('#cookiecutter_id').val(dataId);
+});
 
 
 function saveCookieQSValue() {
-    const data = {
-        ajax_action: 'save_template_field',
-        columnName: $('#cookieqs_columnName').val(),
-        domain: $('#cookieqs_domain').val(),
-        rowId: $('#cookieqs_rowId').val(),
-        actionType: $('#cookieqs_actionType').val(),
-        newValue: $('#cookieqs_dropdown').val()
-    };
+  const columnName = $('#cookieqs_columnName').val();
+  console.log('saveCookieQSValue called with columnName:', columnName);
+  let newValue = '';
 
-    $.post('meta_new.php', data, function(response) {
-        const res = JSON.parse(response);
-        if (res.status === 'success') {
-            $('#cookieqsModal').modal('hide');
-            alert('QSTemplate field Added!');
-            const cellId = `#template_cell_${data.rowId}_${data.columnName}`;
-            $(cellId).html(`${$('#cookieqs_dropdown').select2('data')[0].text} 
-                <button class="btn btn-xs btn-outline-primary" title="Edit" onclick="openCookieQSModal('edit', '${data.columnName}', '${data.domain}', '${$('#cookieqs_dropdown').val()}', '${data.rowId}')">✏️</button>
-                <button class="btn btn-xs btn-outline-danger" title="Delete" onclick="deleteTemplateField('${data.columnName}', '${data.domain}', '${data.rowId}')">🗑️</button>`);
-        } else {
-            alert(res.message);
-        }
-    });
+  if (columnName === 'cookiecutter_id') {
+    // This is the qs_cookiecutter_name case
+    newValue = $('#cookiecutter_id').val();
+  } else if (columnName === 'cookiecutterqs_temp') {
+    newValue = $('#cookieqs_dropdown').val();
+  } else {
+    alert('Unknown column type: ' + columnName);
+    return false;
+  }
 
-    return false; // prevent default form submit
+  const data = {
+    ajax_action: 'save_template_field',
+    columnName: columnName,
+    domain: $('#cookieqs_domain').val(),
+    rowId: $('#cookieqs_rowId').val(),
+    actionType: $('#cookieqs_actionType').val(),
+    newValue: newValue
+  };
+
+  $.post('meta_new.php', data, function(response) {
+    const res = JSON.parse(response);
+    if (res.status === 'success') {
+      $('#cookieqsModal').modal('hide');
+      alert('QSTemplate field Added!');
+
+     
+      const displayText = res.displayText;
+      console.log(displayText);
+      $(cellId).html(`
+        ${displayText}
+        <button class="btn btn-xs btn-outline-primary" title="Edit" onclick="openCookieQSModal('edit', '${data.columnName}', '${data.domain}', '${newValue}', '${data.rowId}')">✏️</button>
+        <button class="btn btn-xs btn-outline-danger" title="Delete" onclick="deleteTemplateField('${data.columnName}', '${data.domain}', '${data.rowId}')">🗑️</button>
+      `);
+    } else {
+      alert(res.message);
+    }
+  });
+
+  return false;
 }
+
+
 
 
 // Meta Field Functions
@@ -728,49 +777,56 @@ $('#templateEditModal').on('shown.bs.modal', function () {
   }
 });
 
+// Cache loaded dropdown data for Add URL Modal and QS URL Modal separately
+let cachedAddRecordDropdownData = null;
+let cachedQsRecordDropdownData = null;
 
-// Cache loaded dropdown data so it loads ONCE per page
-let cachedDropdownData = null;
-
-$('#addRecordModal').on('shown.bs.modal', function () {
-  showAddModalLoadingOverlay();
-  showLoadingInDropdowns();
-
-  if (cachedDropdownData) {
-    // ✅ Use cached data
-    setTimeout(() => {
-      populateAddModalDropdowns(cachedDropdownData);
-      hideAddModalLoadingOverlay();
-    }, 200);
-  } else {
-    // ✅ First time fetch from server
-    loadAddFormDropdowns();
-  }
-});
-
+// Show loading overlay for Add URL Modal
 function showAddModalLoadingOverlay() {
   $('#addModalLoaderOverlay').show();
 }
 
+// Show loading overlay for QS URL Modal
+function showQsModalLoadingOverlay() {
+  $('#qsModalLoaderOverlay').show();
+}
+
+// Hide loading overlay for Add URL Modal
 function hideAddModalLoadingOverlay() {
   $('#addModalLoaderOverlay').hide();
 }
 
-function showLoadingInDropdowns() {
-  $('#addRecordModal select').each(function () {
-    $(this).empty().append('<option>Loading...</option>');
-  });
+// Hide loading overlay for QS URL Modal
+function hideQsModalLoadingOverlay() {
+  $('#qsModalLoaderOverlay').hide();
 }
 
-function loadAddFormDropdowns() {
+// Add URL Modal
+$('#addRecordModal').on('shown.bs.modal', function () {
+  showAddModalLoadingOverlay();
+  if (cachedAddRecordDropdownData) {
+    // Use cached data for Add URL Modal
+    setTimeout(() => {
+      populateAddRecordModalDropdowns(cachedAddRecordDropdownData);
+      hideAddModalLoadingOverlay();
+    }, 200);
+  } else {
+    loadAddRecordModalDropdownData();
+  }
+});
+
+
+
+// Load data for Add URL Modal
+function loadAddRecordModalDropdownData() {
   $.ajax({
     url: 'meta_new.php',
     type: 'POST',
     data: { ajax_action: 'load_dropdown_data' },
     dataType: 'json',
     success: function (data) {
-      cachedDropdownData = data;
-      populateAddModalDropdowns(data);
+      cachedAddRecordDropdownData = data;
+      populateAddRecordModalDropdowns(data);
       hideAddModalLoadingOverlay();
     },
     error: function () {
@@ -780,19 +836,20 @@ function loadAddFormDropdowns() {
     }
   });
 }
-
-function populateAddModalDropdowns(data) {
+// Populate Add URL Modal Dropdowns
+function populateAddRecordModalDropdowns(data) {
   fillSelect($('#add_domain'), data.domains);
   fillSelect($('#add_url'), data.urls);
   fillSelect($('#cookiecutterqs_temp'), data.cookiecutterqs);
 
+  // Populate the template and textbox fields
   for (let i = 1; i <= 5; i++) {
     fillSelect($('#template' + i), data.templates);
     fillSelect($('#textbox' + i), data.textboxes);
   }
 
-  // ✅ Apply/refresh Select2 on all modal select elements
-  $('#addRecordModal .select2-add-record').each(function() {
+  // Initialize Select2 for all dropdowns in Add URL Modal
+  $('#addRecordModal .select2-add-record').each(function () {
     $(this).select2({
       dropdownParent: $('#addRecordModal'),
       width: '100%',
@@ -802,10 +859,67 @@ function populateAddModalDropdowns(data) {
   });
 }
 
+
+// QS URL Modal
+$('#addQsRecordModal').on('shown.bs.modal', function () {
+  showQsModalLoadingOverlay();
+  if (cachedQsRecordDropdownData) {
+    // Use cached data for QS URL Modal
+    setTimeout(() => {
+      populateQsRecordModalDropdowns(cachedQsRecordDropdownData);
+      hideQsModalLoadingOverlay();
+    }, 200);
+  } else {
+    loadQsRecordModalDropdownData();
+  }
+});
+// Load data for QS URL Modal
+function loadQsRecordModalDropdownData() {
+  $.ajax({
+    url: 'meta_new.php',
+    type: 'POST',
+    data: { ajax_action: 'load_dropdown_qs_data' },
+    dataType: 'json',
+    success: function (data) {
+      cachedQsRecordDropdownData = data;
+      populateQsRecordModalDropdowns(data);
+      hideQsModalLoadingOverlay();
+    },
+    error: function () {
+      alert('Error loading dropdown data. Please try again.');
+      $('#addQsRecordModal select').empty().append('<option>Error loading</option>');
+      hideQsModalLoadingOverlay();
+    }
+  });
+}
+
+// Populate QS URL Modal Dropdowns
+function populateQsRecordModalDropdowns(data) {
+  fillSelect($('#add_qs_domain'), data.domains);
+  fillSelect($('#qs_url'), data.urls);
+  fillSelect($('#qs_cookiecutterqs_temp'), data.cookiecutterqs);
+
+  // Populate the template and textbox fields for QS URL
+  for (let i = 1; i <= 5; i++) {
+    fillSelect($('#qsTextbox' + i), data.textboxes);
+  }
+
+  // Initialize Select2 for all dropdowns in QS URL Modal
+  $('#addQsRecordModal .select2-add-record').each(function () {
+    $(this).select2({
+      dropdownParent: $('#addQsRecordModal'),
+      width: '100%',
+      placeholder: 'Select an option',
+      allowClear: true
+    });
+  });
+}
+
+// Utility function to populate dropdowns
 function fillSelect(select, items) {
   select.empty().append('<option value="">Select</option>');
   if (items && items.length) {
-    items.forEach(function(item) {
+    items.forEach(function (item) {
       select.append('<option value="' + item.value + '">' + item.text + '</option>');
     });
   } else {
@@ -813,32 +927,13 @@ function fillSelect(select, items) {
   }
 }
 
-// Initialize Select2 cleanly on modal selects
-function initModalSelect2() {
-  // Destroy previous instances to avoid duplicates
-  $('#addRecordModal .select2-add-record').each(function () {
-    if ($(this).hasClass('select2-hidden-accessible')) {
-      $(this).select2('destroy');
-    }
-  });
-
-  // Re-initialize
-  $('#addRecordModal .select2-add-record').select2({
-    width: '100%',
-    dropdownParent: $('#addRecordModal'),
-    placeholder: 'Please select',
-    allowClear: true
-  });
-}
-
-
 
 function submitAddRecordForm() {
   const formData = $('#addRecordForm').serialize();
   $.post('meta_new.php', formData + '&ajax_action=insert_new_record', function(res) {
     const response = JSON.parse(res);
     if (response.status === 'success') {
-      alert(response.message +'Record added successfully');
+      alert(response.message);
       $('#addRecordModal').modal('hide');
       if (window.dataTable) dataTable.ajax.reload();
     } else {
@@ -846,3 +941,24 @@ function submitAddRecordForm() {
     }
   });
 }
+
+
+function submitAddQsRecordForm() {
+  const formData = $('#addQsRecordForm').serialize();
+  $.post('meta_new.php', formData + '&ajax_action=insert_qs_new_record', function(res) {
+    const response = JSON.parse(res);
+    if (response.status === 'success') {
+      alert(response.message);
+      $('#addQsRecordModal').modal('hide');
+      if (window.dataTable) dataTable.ajax.reload();  // Optionally reload your data table
+    } else {
+      alert('Error: ' + response.message);
+    }
+  });
+}
+
+$(document).ready(function(){
+  $('[data-toggle="tooltip"]').tooltip(); 
+});
+
+

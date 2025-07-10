@@ -91,7 +91,7 @@ if (isset($_POST['ajax_action']) && $_POST['ajax_action'] === 'insert_qs_new_rec
 
     foreach ($qs_urls as $qs_url_raw) {
         $qs_url = zen_db_input($qs_url_raw);
-
+      
         // Check for existing record (duplicate check)
         $check = $db->Execute("SELECT COUNT(*) AS total FROM cookiecutterQS_qs_url WHERE domain = '$domain' AND qs_url = '$qs_url'");
 
@@ -538,28 +538,42 @@ if (isset($_GET['action']) && $_GET['action'] == 'get_urls_data') {
 
         $sql .= " ORDER BY id DESC LIMIT $per_page OFFSET $offset";
 
-    } elseif ($selected_table == 'cookiecutterQS_qs_url') {
-        $fields = "id, domain, qs_url";
-
+    }elseif ($selected_table == 'cookiecutterQS_qs_url') {
+        // Base fields to select
+        $fields = "cqs.domain, cqs.qs_url";
+    
         if ($include_textboxes) {
-            $fields .= ",qsTextbox1, qsTextbox2, qsTextbox3, qsTextbox4, qsTextbox5";
+            $fields .= ", cqs.qsTextbox1, cqs.qsTextbox2, cqs.qsTextbox3, cqs.qsTextbox4, cqs.qsTextbox5";
         }
-
+    
         if ($include_meta) {
-            $fields .= ",qs_meta_title, qs_meta_description, cookiecutter_id";
+            $fields .= ", cqs.qs_meta_title, cqs.qs_meta_description, c.name AS cookiecutter_name";
         }
-
-        $sql = "SELECT $fields FROM cookiecutterQS_qs_url WHERE domain = '" . zen_db_input($selected_domain) . "'";
-        $count_sql = "SELECT COUNT(*) as total FROM cookiecutterQS_qs_url WHERE domain = '" . zen_db_input($selected_domain) . "'";
-
+    
+        // SQL query with JOIN to get the name of cookiecutter_id
+        $sql = "
+            SELECT $fields 
+            FROM cookiecutterQS_qs_url cqs
+            LEFT JOIN cookie_cutter_qs c ON cqs.cookiecutter_id = c.id
+            WHERE cqs.domain = '" . zen_db_input($selected_domain) . "'";
+    
+        // Count query
+        $count_sql = "
+            SELECT COUNT(*) as total 
+            FROM cookiecutterQS_qs_url cqs
+            LEFT JOIN cookie_cutter_qs c ON cqs.cookiecutter_id = c.id
+            WHERE cqs.domain = '" . zen_db_input($selected_domain) . "'";
+    
+        // Adding search functionality for `qs_url`
         if (!empty($search_url)) {
-            $sql .= " AND qs_url LIKE '%" . zen_db_input($search_url) . "%'";
-            $count_sql .= " AND qs_url LIKE '%" . zen_db_input($search_url) . "%'";
+            $sql .= " AND cqs.qs_url LIKE '%" . zen_db_input($search_url) . "%'";
+            $count_sql .= " AND cqs.qs_url LIKE '%" . zen_db_input($search_url) . "%'";
         }
-
-        $sql .= " ORDER BY id DESC LIMIT $per_page OFFSET $offset";
-
-    } elseif ($selected_table == '2') {
+    
+        // Apply limit and offset
+        $sql .= " ORDER BY cqs.id DESC LIMIT $per_page OFFSET $offset";
+    }
+     elseif ($selected_table == '2') {
         $sql = "SELECT domain, header, footer, template1, template2, template3, template4, template5,
                         meta_title, meta_description, url
                 FROM template_to_urls
