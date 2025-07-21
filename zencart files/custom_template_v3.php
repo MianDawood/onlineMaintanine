@@ -572,30 +572,19 @@ if (
 
 <style> 
 
-.search-wrapper {
-  position: absolute;
-  top: 0;
-  left: 100%;
-  margin-left: 10px;
-  width: 320px;
-  max-height: 300px;
-  overflow-y: auto;
-  background: #fff;
-  border: 1px solid #ccc;
-  z-index: 9999;
-  padding: 10px;
-  box-shadow: 0 4px 8px rgba(0,0,0,0.1);
-}
-.each_tags,
-.paragraph_lists li {
-  background: #f1f1f1;
-  margin-bottom: 6px;
-  padding: 6px 12px;
+/* DRAGGABLE BOX */
+#draggableBoxSearch {
+  background: #4CAF50;
+  color: white;
+  padding: 8px;
+  cursor: move;
+  text-align: center;
   border-radius: 4px;
-  font-size: 14px;
+  font-weight: bold;
+  margin-bottom: 10px;
 }
 
-
+/* CONTAINER WRAPPER */
 .search_title {
   position: absolute;
   top: 100px;
@@ -609,17 +598,7 @@ if (
   box-shadow: 0 0 15px rgba(0,0,0,0.1);
 }
 
-#draggableBoxSearch {
-  background: #4CAF50;
-  color: white;
-  padding: 8px;
-  cursor: move;
-  text-align: center;
-  border-radius: 4px;
-  font-weight: bold;
-  margin-bottom: 10px;
-}
-
+/* FILTER FIELDS */
 .search_title .filter-field {
   margin-bottom: 10px;
 }
@@ -632,13 +611,63 @@ if (
   border-radius: 4px;
 }
 
-#closeDraggable {
-  background: none;
-  border: none;
-  font-size: 16px;
-  font-weight: bold;
-  color: white;
+/* LIST STYLING (tags + paragraphs) */
+.each_tags,
+.paragraph_lists li {
+  background: #f1f1f1;
+  margin-bottom: 6px;
+  padding: 6px 12px;
+  border-radius: 4px;
+  font-size: 14px;
   cursor: pointer;
+  transition: background 0.2s ease-in-out;
+}
+
+.each_tags:hover,
+.paragraph_lists li:hover {
+  background: #e0e0e0;
+}
+
+/* MODERN DROPDOWN MENU (Aligned Right) */
+.search-wrapper {
+  position: absolute;
+  top: 0;
+  left: 100%;
+  margin-left: 10px;
+  width: 320px;
+  max-height: 300px;
+  overflow-y: auto;
+  background: #fff;
+  border: 1px solid #ccc;
+  z-index: 9999;
+  padding: 10px;
+  box-shadow: 0 4px 8px rgba(0,0,0,0.1);
+  border-radius: 4px;
+}
+
+/* UL inside dropdown */
+.search-wrapper ul {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}
+
+/* Dropdown options */
+.search-wrapper ul li {
+  padding: 8px 12px;
+  border-bottom: 1px solid #eee;
+  cursor: pointer;
+  font-size: 14px;
+  color: #333;
+  background: #f9f9f9;
+  border-radius: 3px;
+  margin-bottom: 5px;
+  transition: background 0.2s;
+}
+
+.search-wrapper ul li:hover {
+  background-color: #e6f2ff;
+  color: #000;
 }
 
 
@@ -729,12 +758,8 @@ require(DIR_WS_INCLUDES . 'header.php'); ?>
       </div>
       
     </div>
-
     <div class="preview_template_section">
-  
-
       <h3>Customize the Template: </h3>
-     
       <form action="custom_template.php" method="post">
   <?php if(isset($_SESSION['showImage']))
   { ?>
@@ -745,7 +770,6 @@ require(DIR_WS_INCLUDES . 'header.php'); ?>
     </form>
   <div class="row">
     <div class="col-lg-6">
-
     <div class="choose-template" style="margin: 10px 0;">
   <label for="choose_template" style="font-weight: bold; display: block; margin-bottom: 5px;">
     Choose the template to customize:
@@ -795,18 +819,8 @@ require(DIR_WS_INCLUDES . 'header.php'); ?>
 
       <div class="link_stylesheet"></div>
       <div class="link_script"></div>
-
-<!-- Reopen Button -->
-
-   <div>
-        <button id="reopenDraggable" style="display: none; top: 10px; left: 10px;  padding: 6px 10px; font-size: 14px;">🔍 Reopen Filter</button>
-      </div>
-      <!-- Draggable Box -->
-<div class="search_title" id="draggableBox">
-  <div class="draggableSearch" id="draggableBoxSearch">
-    Click here to move
-    <button id="closeDraggable" style="float: right; font-size: 12px; background: transparent; border: none; color: white; cursor: pointer;">✕</button>
-  </div>
+      <div class="search_title" id="draggableBox">
+  <div class="draggableSearch" id="draggableBoxSearch">Click here to move</div>
   <input type="text" name="search_title" class="title_keyword" placeholder="filter title:">
   <input type="text" name="search_parag" class="parag_keyword" placeholder="filter paragraph:">
   <input type="text" name="search_meta_title" class="meta_title_keyword" placeholder="filter meta title:">
@@ -2008,6 +2022,45 @@ require(DIR_WS_INCLUDES . 'header.php'); ?>
   })
   
 
+  $(document).on('keyup', 'input.title_keyword', function(){
+    var txt = $(this).val();
+    $(document).find('div.custom_title_section div.title_section').children().hide();
+    $(document).find('.custom_title_section div.title_section').children().each(function(i, obj) {
+      if($(obj).html().toUpperCase().indexOf(txt.toUpperCase()) != -1) {
+        $(obj).show();
+      }
+    })
+  })  
+  $(document).on('keyup','.meta_title_keyword',function(){  
+      var searchWarpper = $(this).closest('.search_title');
+      searchWarpper.find('div.meta_title_section ul').children().hide();
+      var txt = $(this).val();
+      searchWarpper.find('div.meta_title_section ul').children().each(function(i,v) {
+        if($(this).text().toUpperCase().indexOf(txt.toUpperCase()) != -1) {
+          $(this).show();
+        }
+      })
+  })
+  $(document).on('keyup','.meta_des_keyword',function(){  
+      var searchWarpper = $(this).closest('.search_title');
+      searchWarpper.find('div.meta_des_section ul').children().hide();
+      var txt = $(this).val();
+      searchWarpper.find('div.meta_des_section ul').children().each(function(i,v) {
+        if($(this).text().toUpperCase().indexOf(txt.toUpperCase()) != -1) {
+          $(this).show();
+        }
+      })
+  })
+  $(document).on('keyup','.parag_keyword',function(){  
+      var searchWarpper = $(this).closest('.search_title');
+      searchWarpper.find('div.parag_section ul').children().hide();
+      var txt = $(this).val();
+      searchWarpper.find('div.parag_section ul').children().each(function(i,v) {
+        if($(this).text().toUpperCase().indexOf(txt.toUpperCase()) != -1) {
+          $(this).show();
+        }
+      })
+  })
   
   .on('click', '.template-info', function(e){
     var element = $('.template-info').find('.focused_point');
@@ -2039,7 +2092,27 @@ require(DIR_WS_INCLUDES . 'header.php'); ?>
 
   
 
- 
+  $(document).on('keyup','input.filter_qs_urls',function(){  
+      var searchWarpper = $(this).closest('.search_title');
+      searchWarpper.find('div.custom_qs_url_section ul').children().hide();
+      var txt = $(this).val();
+      searchWarpper.find('div.custom_qs_url_section ul').children().each(function(i,v) {
+        if($(this).text().toUpperCase().indexOf(txt.toUpperCase()) != -1) {
+          $(this).show();
+        }
+      })
+  })
+  $(document).on('keyup','input.filter_urls',function(){  
+      var searchWarpper = $(this).closest('.search_title');
+      searchWarpper.find('div.custom_url_section ul').children().hide();
+      var txt = $(this).val();
+      searchWarpper.find('div.custom_url_section ul').children().each(function(i,v) {
+        if($(this).text().toUpperCase().indexOf(txt.toUpperCase()) != -1) {
+          $(this).show();
+        }
+      })
+  })
+  
 //   $(document).on('click', '.each_tags', function(){
 //     if($(this).closest('div.search-wrapper').attr('class').indexOf('custom_tags_section') > -1) {
 //       var $txt = $(this).closest('div.fr-input-line').find('input#fr-link-insert-layer-text-1');
@@ -2207,82 +2280,6 @@ function createDropdownHTML(items, sectionClass, ulClass) {
   return html;
 }
 
-$(document).ready(function () {
-  $('#closeDraggable').on('click', function (e) {
-    e.stopPropagation();
-    $('#draggableBox').hide();
-    $('#reopenDraggable').show();
-  });
-
-  $('#reopenDraggable').on('click', function () {
-    $('#draggableBox').show();
-    $(this).hide();
-  });
-});
-
-$(document).on('keyup', 'input.title_keyword', function(){
-    var txt = $(this).val();
-    $(document).find('div.custom_title_section div.title_section').children().hide();
-    $(document).find('.custom_title_section div.title_section').children().each(function(i, obj) {
-      if($(obj).html().toUpperCase().indexOf(txt.toUpperCase()) != -1) {
-        $(obj).show();
-      }
-    })
-  })  
-  $(document).on('keyup','.meta_title_keyword',function(){  
-      var searchWarpper = $(this).closest('.search_title');
-      searchWarpper.find('div.meta_title_section ul').children().hide();
-      var txt = $(this).val();
-      searchWarpper.find('div.meta_title_section ul').children().each(function(i,v) {
-        if($(this).text().toUpperCase().indexOf(txt.toUpperCase()) != -1) {
-          $(this).show();
-        }
-      })
-  })
-  $(document).on('keyup','.meta_des_keyword',function(){  
-      var searchWarpper = $(this).closest('.search_title');
-      searchWarpper.find('div.meta_des_section ul').children().hide();
-      var txt = $(this).val();
-      searchWarpper.find('div.meta_des_section ul').children().each(function(i,v) {
-        if($(this).text().toUpperCase().indexOf(txt.toUpperCase()) != -1) {
-          $(this).show();
-        }
-      })
-  })
-  $(document).on('keyup','.parag_keyword',function(){  
-      var searchWarpper = $(this).closest('.search_title');
-      searchWarpper.find('div.parag_section ul').children().hide();
-      var txt = $(this).val();
-      searchWarpper.find('div.parag_section ul').children().each(function(i,v) {
-        if($(this).text().toUpperCase().indexOf(txt.toUpperCase()) != -1) {
-          $(this).show();
-        }
-      })
-  })
-  
-  $(document).on('keyup','input.filter_qs_urls',function(){  
-      var searchWarpper = $(this).closest('.search_title');
-      searchWarpper.find('div.custom_qs_url_section ul').children().hide();
-      var txt = $(this).val();
-      searchWarpper.find('div.custom_qs_url_section ul').children().each(function(i,v) {
-        if($(this).text().toUpperCase().indexOf(txt.toUpperCase()) != -1) {
-          $(this).show();
-        }
-      })
-  })
-  $(document).on('keyup','input.filter_urls',function(){  
-      var searchWarpper = $(this).closest('.search_title');
-      searchWarpper.find('div.custom_url_section ul').children().hide();
-      var txt = $(this).val();
-      searchWarpper.find('div.custom_url_section ul').children().each(function(i,v) {
-        if($(this).text().toUpperCase().indexOf(txt.toUpperCase()) != -1) {
-          $(this).show();
-        }
-      })
-  })
-  
-
-
 function toggleDropdown($input, dataList, sectionClass, ulClass) {
   const wrapper = $input.closest('.search_title');
 
@@ -2347,9 +2344,6 @@ $(document).on('click', function (e) {
     $('.search_title input').removeClass('active_input');
   }
 });
-
-
-
 
 
 

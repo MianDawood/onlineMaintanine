@@ -1,4 +1,31 @@
  <script>
+ 
+  function submit_comment(ida)
+			 {
+			     alert();
+				 //alert($('#com'+ida).serialize()); return;
+				$.ajax({
+					method : 'POST',
+					url : '<?php echo site_url(); ?>company/add_lead_comment/'+ida,
+					data : $('#com'+ida).serialize(),
+					console.log(data);
+					success: function(output)
+					{
+					    console.log(output);
+						if(output == 'done')
+							{
+							  
+								$('#modal-comment'+ida).modal('toggle');
+								 location.reload();
+							}
+					}
+				});
+			 }
+			 
+        
+  </script>
+
+<script>
     function copyTable() {
       var table = document.getElementById("example2");
       var textToCopy = "";
@@ -367,16 +394,17 @@ var whatsappUrl = "https://api.whatsapp.com/send?text=" + message;
 
           	
 
-              	 <!--<form action="javascript:;" id="com<?= $requests[0]->e_id?>" onSubmit="submit_comment('<?= $requests[0]->e_id?>');" method="post">-->
-               <form action="<?php echo site_url(); ?>company/add_lead_comment/<?= $requests[0]->e_id; ?>" method="post" >
-
+              	 <!--<form action="javascript:;" id="com<?= $requests[0]->e_id?>" onSubmit="submit_comment('<?= $requests[0]->e_id; ?>');" method="post">-->
+               
+<form action="<?php echo site_url(); ?>company/add_lead_comment/<?= $requests[0]->e_id; ?>" method="post" >
                  <div class="col-md-12">
 
-                 <label> Employee Comment</label>
+                 <label>Comment</label>
 
 			      <div class="form-group">
 
                     <textarea name="comment" class="form-control"  cols="50" rows="3"><?php echo $requests[0]->req_comment; ?> </textarea>
+                    <input type="hidden" name="admin_comment" required placeholder="Enter Must your Name" value="<?= $requests[0]->admin_comment; ?>" class="form-control"/>
 
                 </div>
 
@@ -384,28 +412,13 @@ var whatsappUrl = "https://api.whatsapp.com/send?text=" + message;
 
                 <br>
 
-                <div class="col-md-12">
-
-<label>Admin Comment</label>
-
-<div class="form-group">
-
-   <textarea name="admin_comment" class="form-control"  cols="50" rows="3"><?php echo $requests[0]->admin_comment; ?> </textarea>
-
-</div>
-
-</div>
-
-<br>
-
-
                <div class="col-md-12">
 
 			  <div class="form-group">
 
                 <label>Name</label>
 
-   <input type="text" name="name" required placeholder="Enter Must your Name" value="<?=  $requests[0]->comment_req_by; ?>" class="form-control"/>
+   <input type="text" name="name" required placeholder="Enter Must your Name" value="<?= $requests[0]->comment_req_by; ?>" class="form-control"/>
 
                 </div>
 
@@ -428,9 +441,6 @@ var whatsappUrl = "https://api.whatsapp.com/send?text=" + message;
 			  <div class="form-group">
 
                  <input type="hidden" name="add" value="comment"/>
-
-
-
                 <input type="submit" name="submit" value="Save" class="btn btn-info" />
 
                 </div>
@@ -623,7 +633,7 @@ var whatsappUrl = "https://api.whatsapp.com/send?text=" + message;
 
             
 
-            <button id="copy-table-btn" onclick="copyTable()">Copy Table</button>
+           
 
             </div>
 
@@ -915,22 +925,25 @@ var whatsappUrl = "https://api.whatsapp.com/send?text=" + message;
           </div>
           
          <script type="text/javascript">
-			 function submit_comment(ida)
-			 {
-				 //alert($('#com'+ida).serialize()); return;
-				$.ajax({
-					method : 'POST',
-					url : '<?php echo site_url(); ?>company/add_lead_comment/'+ida,
-					data : $('#com'+ida).serialize(),
-					success: function(output)
-					{
-						if(output == 'done')
-							{
-								$('#modal-comment'+ida).modal('toggle');
-							}
-					}
-				});
-			 }
+        
+			 //function submit_lead_comment(ida)
+			 //{
+				//  //alert($('#com'+ida).serialize()); return;
+				// $.ajax({
+				// 	method : 'POST',
+				// 	url : '<?php echo site_url(); ?>company/add_lead_comment/'+ida,
+				// 	data : $('#com'+ida).serialize(),
+				// 	console.log(data);
+				// 	success: function(output)
+				// 	{
+				// 		if(output == 'done')
+				// 			{
+				// 				$('#modal-comment'+ida).modal('toggle');
+				// 				location.reload();
+				// 			}
+				// 	}
+				// });
+			 //}
 			 
 			 function sub_meeting(id)
 			 {

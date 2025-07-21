@@ -267,39 +267,43 @@ while (!$templates->EOF) {
   }
 
   if(isset($_POST['pull_template_name'])) {
-    $template_name = json_decode($_POST['pull_template_name']);
-    $contents = file_get_contents('../../cdn/custom_template/'.$template_name, true);
     
-    // Global Css check
-    $aquery = "select *
-      from custom_template_file where template_name = '" . $template_name . "' and global = 1";
-
+    $template_name = $_POST['pull_template_name'];
+    $contents = file_get_contents('../../cdn/custom_template/'.$template_name, true);
+  
+    // Global CSS check
+    $aquery = "SELECT * FROM custom_template_file WHERE template_name = '" . $template_name . "' AND global = 1";
     $aquery_result = $db->Execute($aquery);
 
     $custom_files = array();
     while(!$aquery_result->EOF) {
-      $custom_files[] = $aquery_result->fields['file_name'];
-      $aquery_result->MoveNext();
+        $custom_files[] = $aquery_result->fields['file_name'];
+        $aquery_result->MoveNext();
     }
+
     if($aquery_result->RecordCount() > 0) {
-      $global_css_contents = file_get_contents('../../cdn/custom_template/css/'.$custom_files[0], true);
+        $global_css_contents = file_get_contents('../../cdn/custom_template/css/'.$custom_files[0], true);
     } else {
-      $global_css_contents = "";
+        $global_css_contents = "";
     }
-    // Get the stylesheet 
-    $return['template'] = htmlspecialchars(isset($converted_contents) ? $converted_contents : '', ENT_QUOTES | ENT_SUBSTITUTE, "UTF-8");
-    $css_file_name = str_replace('.php', '.css', (string)($template_name ?? ''));
 
+    $css_file_name = str_replace('.php', '.css', $template_name);
     $css_contents = file_get_contents('../../cdn/custom_template/css/'.$css_file_name, true);
-    
-    // Get the js script
-    $js_file_name = str_replace('.php', '.js.php', $template_name ?? '');
 
+    $js_file_name = str_replace('.php', '.js.php', $template_name);
     $js_contents = file_get_contents('../../cdn/custom_template/js/'.$js_file_name, true);
-    
-    echo json_encode(array('result'=>'success', 'html'=> $contents, 'css'=>$css_contents, 'js'=>$js_contents, 'files' =>$custom_files, 'global_contents'=>$global_css_contents));
+
+    echo json_encode(array(
+        'result' => 'success',
+        'html' => $contents,
+        'css' => $css_contents,
+        'js' => $js_contents,
+        'files' => $custom_files,
+        'global_contents' => $global_css_contents
+    ));
     exit;
-  }
+}
+
   
   if(isset($_POST['update_custom_template'])) {
     $template_infos = json_decode($_POST['update_custom_template'], true);
@@ -525,10 +529,7 @@ while (!$templates->EOF) {
 <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/4.7.0/css/font-awesome.min.css" rel="stylesheet" type="text/css" />
 <script language="javascript" src="includes/menu.js"></script>
 <script language="javascript" src="includes/general.js"></script>
-  
- <!--<script src="js/msdropdown/jquery-1.3.2.min.js" type="text/javascript"></script> -->
- <!--<script src="js/jquery.dd.min.js" type="text/javascript"></script> -->
-<!-- <link rel="stylesheet" type="text/css" href="css/msdropdown/dd.css" />   -->
+
 <link href="../froala-editor/css/froala_editor.pkgd.min.css" rel="stylesheet" type="text/css" />
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.3.0/codemirror.min.css">
 <!-- Include the plugin CSS file. -->
@@ -541,7 +542,8 @@ while (!$templates->EOF) {
 <!-- Include TUI Froala Editor CSS. -->
 <link rel="stylesheet" href="../froala-editor/css/third_party/image_tui.min.css">  
   
-  
+ 
+
 <script type="text/javascript">
 
   function init()
@@ -661,43 +663,55 @@ require(DIR_WS_INCLUDES . 'header.php'); ?>
   <input type="submit" style="background-color: #4CAF50; color: white; padding: 5px 7px; text-align: center; text-decoration: none; display: inline-block; font-size: 12px; margin: 1px 1px; cursor: pointer; border-radius: 2px;" name="showimages" value="Show Images">
   <?php } ?>
     </form>
-      <div class="choose-template">
-        Choose the template to cusotmize:
-          <select name="choose_template" id="choose_template" onchange="showValue($('#choose_template option:selected').text(), this.value);">
-            <?php 
-              foreach($files as $file) {
-                if($file['text'] == '--choose the template--') {
-                  echo "<option id='".$file['id']."'>".$file['text']."</option>";
-                } else {
-                  $screenshot_name = str_replace('.php','.png', $file['text']);
-                  if (file_exists ( '../../cdn/design_block/photos/'.$screenshot_name) ) {
-                    if($file['status'] == 1)
-                    {
-                      echo "<option data-image='../../cdn/design_block/photos/".$screenshot_name."' id='".$file['id']."'>".$file['text']."</option>";
+  <div class="row">
+    <div class="col-lg-6">
+    <div class="choose-template" style="margin: 10px 0;">
+  <label for="choose_template" style="font-weight: bold; display: block; margin-bottom: 5px;">
+    Choose the template to customize:
+  </label>
+  <select name="choose_template" id="choose_template" style="width:100%;">
+  <option></option> <!-- needed for placeholder support -->
+  <?php 
 
-                    }
-                    else
-                    {
-                      echo "<option  id='".$file['id']."'>".$file['text']."</option>";
+    foreach($files as $file) {
+      if($file['text'] == '--choose the template--') {
+        echo "<option id='".$file['id']."'>".$file['text']."</option>";
+      } else {
+        $screenshot_name = str_replace('.php','.png', $file['text']);
+        if (file_exists ( '../../cdn/design_block/photos/'.$screenshot_name) ) {
+          if($file['status'] == 1)
+          {
+            echo "<option data-image='../../cdn/design_block/photos/".$screenshot_name."' id='".$file['id']."'>".$file['text']."</option>";
 
-                    }
-                  } else {
-                    if($file['status'] == 1)
-                    {
-                      echo "<option data-image='../../cdn/design_block/photos/default.jpg' id='".$file['id']."'>".$file['text']."</option>";
+          }
+          else
+          {
+            echo "<option  id='".$file['id']."'>".$file['text']."</option>";
 
-                    }
-                    else
-                    {
-                      echo "<option id='".$file['id']."'>".$file['text']."</option>";
+          }
+        } else {
+          if($file['status'] == 1)
+          {
+            echo "<option data-image='../../cdn/design_block/photos/default.jpg' id='".$file['id']."'>".$file['text']."</option>";
 
-                    }
-                  }
-                }
-              }
-            ?>
-          </select>
-      </div>
+          }
+          else
+          {
+            echo "<option id='".$file['id']."'>".$file['text']."</option>";
+
+          }
+        }
+      }
+    }
+  ?>
+</select>
+
+</div>
+    </div>
+
+    <div class="col-lg-12"></div>
+  </div>
+
       <div class="link_stylesheet"></div>
       <div class="link_script"></div>
       <div class="search_title" id="draggableBox">
@@ -909,12 +923,12 @@ require(DIR_WS_INCLUDES . 'header.php'); ?>
 <!--<script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/3.2.1/jquery.js"></script> -->
 <script src="https://netdna.bootstrapcdn.com/bootstrap/3.3.5/js/bootstrap.js"></script> 
 
-<script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/3.2.1/jquery.js"></script> 
+<!-- <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/3.2.1/jquery.js"></script>  -->
 <script src="https://cdn.jsdelivr.net/jquery.validation/1.19.5/jquery.validate.min.js"></script>
 
 <!-- For screenshot  -->
 
-<script src="js/jquery.dd.js"></script>
+<!-- <script src="js/jquery.dd.js"></script> -->
 <!-- <script type="text/javascript" src="../html2canvas/dist/html2canvas.js"></script> -->
 <script type="text/javascript" src="../html2canvas/html2canvas.min.js"></script>
 <script type="text/javascript" src="../html2canvas/canvas2image.js"></script>
@@ -939,11 +953,7 @@ require(DIR_WS_INCLUDES . 'header.php'); ?>
 <script type="text/javascript">
   var buttonClick = 0;
   $(document).ready(function(){
-    try {
-      $("body select#choose_template").msDropDown();
-    } catch(e) {
-      alert(e.message);
-    }
+  
     
     function escapeRegExp(string){
       return string.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
@@ -991,11 +1001,7 @@ require(DIR_WS_INCLUDES . 'header.php'); ?>
     }
     
     
-    $("#choose_template").msDropdown({on:{change:function(data, ui) {
-      var val = data.value;
-      if(val!="")
-        window.location = val;
-    }}}).data("dd");
+  
     
     $('#summernote').summernote({
         placeholder: 'Preview the custom template here...',
@@ -1009,7 +1015,8 @@ require(DIR_WS_INCLUDES . 'header.php'); ?>
         width: 800
     });
     window.editor = new FroalaEditor('#template_preview', 
-     {key: "Ne2C1sF4D3C3A14A7D9jF1QUg1Xc2OZE1ABVJRDRNGGUH1ITrA1C7A6F6E1E4H4E1A9C6==",
+     {
+      key: "Ne2C1sF4D3C3A14A7D9jF1QUg1Xc2OZE1ABVJRDRNGGUH1ITrA1C7A6F6E1E4H4E1A9C6==",
       // Set custom buttons.
       toolbarButtons: {
         'moreText': {
@@ -1818,16 +1825,24 @@ require(DIR_WS_INCLUDES . 'header.php'); ?>
   
   function showValue(arg, arg2) {
     var template_name = $('#choose_template option:selected').html();  
+
     if(arg != '--choose the template--' && arg != '') {
       req_data = {
-        'pull_template_name': JSON.stringify(arg)
-      }   
+  'pull_template_name': arg  // ← this is correct
+} 
+
       var url = document.location.href;
       $.post(url, req_data, function(res){
         var file_link = res.files;
         var encodeHtml = unescapeHtml(decodeURI(res.html.replace(/%(?![0-9][0-9a-fA-F]+)/g, '%25')));
-        var convertedHtml = encodeHtml.replace(/<\?/gm, '{?').replace(/\?>/gm, '?}')
-        $('#modify_section .fr-element.fr-view').html(convertedHtml);
+
+      
+      var convertedHtml = encodeHtml.replace(/<\?/gm, '{?').replace(/\?>/gm, '?}');
+      if (window.editor) {
+          window.editor.html.set(convertedHtml);   // This sets the content correctly in Froala editor
+          window.editor.events.focus();            // Optional: focus the editor
+                           }
+
         $('#script_section').val(res.js);
         $('#update_template_css_modal input#global_css_link').val('');
         
@@ -2245,5 +2260,46 @@ function dragElement(elmnt) {
     document.onmousemove = null;
   }
 }
+
+$(document).ready(function () {
+  $('#choose_template').select2({
+    placeholder: '--choose the template--',
+    allowClear: true,
+    width: '100%',
+    templateResult: formatTemplateOption,
+    templateSelection: formatTemplateSelection
+  });
+
+  $('#choose_template').on('change', function () {
+    const selectedVal = $(this).val();
+    const selectedText = $(this).find('option:selected').text();
+    if (selectedVal !== '') {
+      showValue(selectedText, selectedVal);
+    }
+  });
+
+  function formatTemplateOption(option) {
+    if (!option.id) return option.text;
+
+    const imageUrl = $(option.element).data('image');
+    if (imageUrl) {
+      return $(`
+        <span style="display:flex; align-items:center;">
+          <img src="${imageUrl}" style="width:40px; height:auto; margin-right:8px;" />
+          ${option.text}
+        </span>
+      `);
+    }
+
+    return option.text;
+  }
+
+  function formatTemplateSelection(option) {
+    return option.text;
+  }
+});
+
+
+
 
 </script>

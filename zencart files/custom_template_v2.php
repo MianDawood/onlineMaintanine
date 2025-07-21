@@ -632,16 +632,6 @@ if (
   border-radius: 4px;
 }
 
-#closeDraggable {
-  background: none;
-  border: none;
-  font-size: 16px;
-  font-weight: bold;
-  color: white;
-  cursor: pointer;
-}
-
-
 
 </style>
 </head>
@@ -729,12 +719,8 @@ require(DIR_WS_INCLUDES . 'header.php'); ?>
       </div>
       
     </div>
-
     <div class="preview_template_section">
-  
-
       <h3>Customize the Template: </h3>
-     
       <form action="custom_template.php" method="post">
   <?php if(isset($_SESSION['showImage']))
   { ?>
@@ -745,7 +731,6 @@ require(DIR_WS_INCLUDES . 'header.php'); ?>
     </form>
   <div class="row">
     <div class="col-lg-6">
-
     <div class="choose-template" style="margin: 10px 0;">
   <label for="choose_template" style="font-weight: bold; display: block; margin-bottom: 5px;">
     Choose the template to customize:
@@ -795,18 +780,8 @@ require(DIR_WS_INCLUDES . 'header.php'); ?>
 
       <div class="link_stylesheet"></div>
       <div class="link_script"></div>
-
-<!-- Reopen Button -->
-
-   <div>
-        <button id="reopenDraggable" style="display: none; top: 10px; left: 10px;  padding: 6px 10px; font-size: 14px;">🔍 Reopen Filter</button>
-      </div>
-      <!-- Draggable Box -->
-<div class="search_title" id="draggableBox">
-  <div class="draggableSearch" id="draggableBoxSearch">
-    Click here to move
-    <button id="closeDraggable" style="float: right; font-size: 12px; background: transparent; border: none; color: white; cursor: pointer;">✕</button>
-  </div>
+      <div class="search_title" id="draggableBox">
+  <div class="draggableSearch" id="draggableBoxSearch">Click here to move</div>
   <input type="text" name="search_title" class="title_keyword" placeholder="filter title:">
   <input type="text" name="search_parag" class="parag_keyword" placeholder="filter paragraph:">
   <input type="text" name="search_meta_title" class="meta_title_keyword" placeholder="filter meta title:">
@@ -2008,6 +1983,45 @@ require(DIR_WS_INCLUDES . 'header.php'); ?>
   })
   
 
+  $(document).on('keyup', 'input.title_keyword', function(){
+    var txt = $(this).val();
+    $(document).find('div.custom_title_section div.title_section').children().hide();
+    $(document).find('.custom_title_section div.title_section').children().each(function(i, obj) {
+      if($(obj).html().toUpperCase().indexOf(txt.toUpperCase()) != -1) {
+        $(obj).show();
+      }
+    })
+  })  
+  $(document).on('keyup','.meta_title_keyword',function(){  
+      var searchWarpper = $(this).closest('.search_title');
+      searchWarpper.find('div.meta_title_section ul').children().hide();
+      var txt = $(this).val();
+      searchWarpper.find('div.meta_title_section ul').children().each(function(i,v) {
+        if($(this).text().toUpperCase().indexOf(txt.toUpperCase()) != -1) {
+          $(this).show();
+        }
+      })
+  })
+  $(document).on('keyup','.meta_des_keyword',function(){  
+      var searchWarpper = $(this).closest('.search_title');
+      searchWarpper.find('div.meta_des_section ul').children().hide();
+      var txt = $(this).val();
+      searchWarpper.find('div.meta_des_section ul').children().each(function(i,v) {
+        if($(this).text().toUpperCase().indexOf(txt.toUpperCase()) != -1) {
+          $(this).show();
+        }
+      })
+  })
+  $(document).on('keyup','.parag_keyword',function(){  
+      var searchWarpper = $(this).closest('.search_title');
+      searchWarpper.find('div.parag_section ul').children().hide();
+      var txt = $(this).val();
+      searchWarpper.find('div.parag_section ul').children().each(function(i,v) {
+        if($(this).text().toUpperCase().indexOf(txt.toUpperCase()) != -1) {
+          $(this).show();
+        }
+      })
+  })
   
   .on('click', '.template-info', function(e){
     var element = $('.template-info').find('.focused_point');
@@ -2037,9 +2051,105 @@ require(DIR_WS_INCLUDES . 'header.php'); ?>
     e.preventDefault();
   })
 
+
+  // Helper to close all dropdowns
+function closeAllSearchDropdowns() {
+  $('.custom_title_section, .custom_parag_section, .custom_meta_title_section, .custom_meta_des_section, .custom_qs_url_section, .custom_url_section').remove();
+}
+
+$(document).on('click', '.search_title input', function (e) {
+  e.stopPropagation(); // Prevent from bubbling to document
+  closeAllSearchDropdowns(); // Close existing
+
+  var inputClass = $(this).attr('class');
+  var container = $(this).closest('.search_title');
+  var sectionHtml = '';
+
+  if (inputClass.includes('title_keyword')) {
+    var tags = <?php echo json_encode($custom_tags); ?>;
+    sectionHtml += '<div class="search-wrapper custom_title_section"><div class="title_section">';
+    $.each(tags, function (i, obj) {
+      sectionHtml += '<div class="each_tags">' + escapeHtml(obj) + '</div>';
+    });
+    sectionHtml += '</div></div>';
+  }
+
+  else if (inputClass.includes('parag_keyword')) {
+    var paragraphs = <?php echo json_encode($paragraph_lists); ?>;
+    sectionHtml += '<div class="search-wrapper custom_parag_section paragraph_lists"><div class="parag_section"><ul>';
+    $.each(paragraphs, function (i, obj) {
+      sectionHtml += '<li>' + escapeHtml(obj) + '</li>';
+    });
+    sectionHtml += '</ul></div></div>';
+  }
+
+  else if (inputClass.includes('meta_title_keyword')) {
+    var titles = <?php echo json_encode($meta_title_lists); ?>;
+    sectionHtml += '<div class="search-wrapper custom_meta_title_section paragraph_lists"><div class="meta_title_section"><ul>';
+    $.each(titles, function (i, obj) {
+      sectionHtml += '<li>' + escapeHtml(obj) + '</li>';
+    });
+    sectionHtml += '</ul></div></div>';
+  }
+
+  else if (inputClass.includes('meta_des_keyword')) {
+    var descs = <?php echo json_encode($meta_desc_lists); ?>;
+    sectionHtml += '<div class="search-wrapper custom_meta_des_section paragraph_lists"><div class="meta_des_section"><ul>';
+    $.each(descs, function (i, obj) {
+      sectionHtml += '<li>' + escapeHtml(obj) + '</li>';
+    });
+    sectionHtml += '</ul></div></div>';
+  }
+
+  else if (inputClass.includes('filter_qs_urls')) {
+    var qsUrls = <?php echo json_encode($qs_urls); ?>;
+    sectionHtml += '<div class="search-wrapper custom_qs_url_section paragraph_lists"><div class="qs_url_section"><ul>';
+    $.each(qsUrls, function (i, obj) {
+      sectionHtml += '<li>' + escapeHtml(obj) + '</li>';
+    });
+    sectionHtml += '</ul></div></div>';
+  }
+
+  else if (inputClass.includes('filter_urls')) {
+    var urls = <?php echo json_encode($url_tags); ?>;
+    sectionHtml += '<div class="search-wrapper custom_url_section paragraph_lists"><div class="url_section"><ul>';
+    $.each(urls, function (i, obj) {
+      sectionHtml += '<li>' + escapeHtml(obj) + '</li>';
+    });
+    sectionHtml += '</ul></div></div>';
+  }
+
+  $(this).after(sectionHtml);
+});
+
+// Close all menus when clicking elsewhere
+$(document).on('click', function () {
+  closeAllSearchDropdowns();
+});
+
   
 
- 
+  $(document).on('keyup','input.filter_qs_urls',function(){  
+      var searchWarpper = $(this).closest('.search_title');
+      searchWarpper.find('div.custom_qs_url_section ul').children().hide();
+      var txt = $(this).val();
+      searchWarpper.find('div.custom_qs_url_section ul').children().each(function(i,v) {
+        if($(this).text().toUpperCase().indexOf(txt.toUpperCase()) != -1) {
+          $(this).show();
+        }
+      })
+  })
+  $(document).on('keyup','input.filter_urls',function(){  
+      var searchWarpper = $(this).closest('.search_title');
+      searchWarpper.find('div.custom_url_section ul').children().hide();
+      var txt = $(this).val();
+      searchWarpper.find('div.custom_url_section ul').children().each(function(i,v) {
+        if($(this).text().toUpperCase().indexOf(txt.toUpperCase()) != -1) {
+          $(this).show();
+        }
+      })
+  })
+  
 //   $(document).on('click', '.each_tags', function(){
 //     if($(this).closest('div.search-wrapper').attr('class').indexOf('custom_tags_section') > -1) {
 //       var $txt = $(this).closest('div.fr-input-line').find('input#fr-link-insert-layer-text-1');
@@ -2191,165 +2301,6 @@ $(document).ready(function () {
     return option.text;
   }
 });
-
-
-
-///New code by me ///
-
-function createDropdownHTML(items, sectionClass, ulClass) {
-  var html = '<div class="search-wrapper ' + sectionClass + '"><div class="' + ulClass + '"><ul>';
-  $.each(items, function(i, obj) {
-    if (escapeHtml(obj) != '') {
-      html += '<li>' + escapeHtml(obj) + '</li>';
-    }
-  });
-  html += '</ul></div></div>';
-  return html;
-}
-
-$(document).ready(function () {
-  $('#closeDraggable').on('click', function (e) {
-    e.stopPropagation();
-    $('#draggableBox').hide();
-    $('#reopenDraggable').show();
-  });
-
-  $('#reopenDraggable').on('click', function () {
-    $('#draggableBox').show();
-    $(this).hide();
-  });
-});
-
-$(document).on('keyup', 'input.title_keyword', function(){
-    var txt = $(this).val();
-    $(document).find('div.custom_title_section div.title_section').children().hide();
-    $(document).find('.custom_title_section div.title_section').children().each(function(i, obj) {
-      if($(obj).html().toUpperCase().indexOf(txt.toUpperCase()) != -1) {
-        $(obj).show();
-      }
-    })
-  })  
-  $(document).on('keyup','.meta_title_keyword',function(){  
-      var searchWarpper = $(this).closest('.search_title');
-      searchWarpper.find('div.meta_title_section ul').children().hide();
-      var txt = $(this).val();
-      searchWarpper.find('div.meta_title_section ul').children().each(function(i,v) {
-        if($(this).text().toUpperCase().indexOf(txt.toUpperCase()) != -1) {
-          $(this).show();
-        }
-      })
-  })
-  $(document).on('keyup','.meta_des_keyword',function(){  
-      var searchWarpper = $(this).closest('.search_title');
-      searchWarpper.find('div.meta_des_section ul').children().hide();
-      var txt = $(this).val();
-      searchWarpper.find('div.meta_des_section ul').children().each(function(i,v) {
-        if($(this).text().toUpperCase().indexOf(txt.toUpperCase()) != -1) {
-          $(this).show();
-        }
-      })
-  })
-  $(document).on('keyup','.parag_keyword',function(){  
-      var searchWarpper = $(this).closest('.search_title');
-      searchWarpper.find('div.parag_section ul').children().hide();
-      var txt = $(this).val();
-      searchWarpper.find('div.parag_section ul').children().each(function(i,v) {
-        if($(this).text().toUpperCase().indexOf(txt.toUpperCase()) != -1) {
-          $(this).show();
-        }
-      })
-  })
-  
-  $(document).on('keyup','input.filter_qs_urls',function(){  
-      var searchWarpper = $(this).closest('.search_title');
-      searchWarpper.find('div.custom_qs_url_section ul').children().hide();
-      var txt = $(this).val();
-      searchWarpper.find('div.custom_qs_url_section ul').children().each(function(i,v) {
-        if($(this).text().toUpperCase().indexOf(txt.toUpperCase()) != -1) {
-          $(this).show();
-        }
-      })
-  })
-  $(document).on('keyup','input.filter_urls',function(){  
-      var searchWarpper = $(this).closest('.search_title');
-      searchWarpper.find('div.custom_url_section ul').children().hide();
-      var txt = $(this).val();
-      searchWarpper.find('div.custom_url_section ul').children().each(function(i,v) {
-        if($(this).text().toUpperCase().indexOf(txt.toUpperCase()) != -1) {
-          $(this).show();
-        }
-      })
-  })
-  
-
-
-function toggleDropdown($input, dataList, sectionClass, ulClass) {
-  const wrapper = $input.closest('.search_title');
-
-  // Remove all dropdowns
-  wrapper.find('.search-wrapper').remove();
-
-  // If already focused, remove and return
-  if ($input.hasClass('active_input')) {
-    $input.removeClass('active_input');
-    return;
-  }
-
-  // Clear other inputs' active class
-  $('.search_title input').removeClass('active_input');
-  $input.addClass('active_input');
-
-  const dropdownHTML = createDropdownHTML(dataList, sectionClass, ulClass);
-  $input.after(dropdownHTML);
-}
-
-// Attach handlers
-$(document).on('click', '.search_title input.title_keyword', function (e) {
-  e.stopPropagation();
-  const custom_tags = <?php echo json_encode($custom_tags); ?>;
-  toggleDropdown($(this), custom_tags, 'custom_title_section', 'title_section');
-});
-
-$(document).on('click', '.search_title input.parag_keyword', function (e) {
-  e.stopPropagation();
-  const paragraph_lists = <?php echo json_encode($paragraph_lists); ?>;
-  toggleDropdown($(this), paragraph_lists, 'custom_parag_section', 'parag_section');
-});
-
-$(document).on('click', '.search_title input.meta_title_keyword', function (e) {
-  e.stopPropagation();
-  const meta_title_lists = <?php echo json_encode($meta_title_lists); ?>;
-  toggleDropdown($(this), meta_title_lists, 'custom_meta_title_section', 'meta_title_section');
-});
-
-$(document).on('click', '.search_title input.meta_des_keyword', function (e) {
-  e.stopPropagation();
-  const meta_desc_lists = <?php echo json_encode($meta_desc_lists); ?>;
-  toggleDropdown($(this), meta_desc_lists, 'custom_meta_des_section', 'meta_des_section');
-});
-
-$(document).on('click', '.search_title input.filter_qs_urls', function (e) {
-  e.stopPropagation();
-  const qs_urls = <?php echo json_encode($qs_urls); ?>;
-  toggleDropdown($(this), qs_urls, 'custom_qs_url_section', 'qs_url_section');
-});
-
-$(document).on('click', '.search_title input.filter_urls', function (e) {
-  e.stopPropagation();
-  const url_tags = <?php echo json_encode($url_tags); ?>;
-  toggleDropdown($(this), url_tags, 'custom_url_section', 'url_section');
-});
-
-// Clicking outside will remove dropdowns
-$(document).on('click', function (e) {
-  if (!$(e.target).closest('.search_title').length) {
-    $('.search-wrapper').remove();
-    $('.search_title input').removeClass('active_input');
-  }
-});
-
-
-
 
 
 
